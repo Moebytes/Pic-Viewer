@@ -1,4 +1,4 @@
-## Photo Viewer
+## Pic Viewer
 
 <img src="assets/images/readme.png">
 
@@ -39,6 +39,12 @@ This is a simple photo viewer app.
 - Ctrl S: Save image(s)
 - Ctrl O: Open image(s)
 - Drag and drop: Open image(s)
+
+### Design
+
+Our design is available here: https://www.figma.com/design/kqGaBzYxe93zSPxDPz6wRa/Pic-Viewer
+
+*New design is wip
 
 ### Installation
 
