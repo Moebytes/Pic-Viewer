@@ -1,8 +1,7 @@
-import {ipcRenderer} from "electron"
-import React, {useEffect, useState, useRef, useContext} from "react"
-import ReactDom from "react-dom"
+import React, {useEffect, useState} from "react"
+import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "../styles/cropdialog.less"
+import "./styles/cropdialog.less"
 
 const CropDialog: React.FunctionComponent = (props) => {
     const initialState = {
@@ -16,16 +15,16 @@ const CropDialog: React.FunctionComponent = (props) => {
 
     useEffect(() => {
         const initTheme = async () => {
-            const theme = await ipcRenderer.invoke("get-theme")
-            const transparency = await ipcRenderer.invoke("get-transparency")
+            const theme = await window.ipcRenderer.invoke("get-theme")
+            const transparency = await window.ipcRenderer.invoke("get-transparency")
             functions.updateTheme(theme, transparency)
         }
         initTheme()
         const savedValues = async () => {
-            const savedX = await ipcRenderer.invoke("get-temp", "x")
-            const savedY = await ipcRenderer.invoke("get-temp", "y")
-            const savedWidth = await ipcRenderer.invoke("get-temp", "width")
-            const savedHeight = await ipcRenderer.invoke("get-temp", "height")
+            const savedX = await window.ipcRenderer.invoke("get-temp", "x")
+            const savedY = await window.ipcRenderer.invoke("get-temp", "y")
+            const savedWidth = await window.ipcRenderer.invoke("get-temp", "width")
+            const savedHeight = await window.ipcRenderer.invoke("get-temp", "height")
             if (savedX) changeState("x", Number(savedX))
             if (savedY) changeState("y", Number(savedY))
             if (savedWidth) changeState("width", Number(savedWidth))
@@ -35,9 +34,9 @@ const CropDialog: React.FunctionComponent = (props) => {
         const updateTheme = (event: any, theme: string, transparency: boolean) => {
             functions.updateTheme(theme, transparency)
         }
-        ipcRenderer.on("update-theme", updateTheme)
+        window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
-            ipcRenderer.removeListener("update-theme", updateTheme)
+            window.ipcRenderer.removeListener("update-theme", updateTheme)
         }
     }, [])
 
@@ -57,12 +56,12 @@ const CropDialog: React.FunctionComponent = (props) => {
             click("reject")
         }
         document.addEventListener("keydown", keyDown)
-        ipcRenderer.on("enter-pressed", enterPressed)
-        ipcRenderer.on("escape-pressed", escapePressed)
+        window.ipcRenderer.on("enter-pressed", enterPressed)
+        window.ipcRenderer.on("escape-pressed", escapePressed)
         return () => {
             document.removeEventListener("keydown", keyDown)
-            ipcRenderer.removeListener("enter-pressed", enterPressed)
-            ipcRenderer.removeListener("escape-pressed", escapePressed)
+            window.ipcRenderer.removeListener("enter-pressed", enterPressed)
+            window.ipcRenderer.removeListener("escape-pressed", escapePressed)
         }
     })
 
@@ -72,36 +71,36 @@ const CropDialog: React.FunctionComponent = (props) => {
                 setState((prev) => {
                     return {...prev, x: value}
                 })
-                ipcRenderer.invoke("apply-crop", {...state, x: value, realTime: true})
-                ipcRenderer.invoke("save-temp", "x", String(value))
+                window.ipcRenderer.invoke("apply-crop", {...state, x: value, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "x", String(value))
                 break
             case "y":
                 setState((prev) => {
                     return {...prev, y: value}
                 })
-                ipcRenderer.invoke("apply-crop", {...state, y: value, realTime: true})
-                ipcRenderer.invoke("save-temp", "y", String(value))
+                window.ipcRenderer.invoke("apply-crop", {...state, y: value, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "y", String(value))
                 break
             case "width":
                 setState((prev) => {
                     return {...prev, width: value}
                 })
-                ipcRenderer.invoke("apply-crop", {...state, width: value, realTime: true})
-                ipcRenderer.invoke("save-temp", "width", String(value))
+                window.ipcRenderer.invoke("apply-crop", {...state, width: value, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "width", String(value))
                 break
             case "height":
                 setState((prev) => {
                     return {...prev, height: value}
                 })
-                ipcRenderer.invoke("apply-crop", {...state, height: value, realTime: true})
-                ipcRenderer.invoke("save-temp", "height", String(value))
+                window.ipcRenderer.invoke("apply-crop", {...state, height: value, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "height", String(value))
                 break
         }
     }
 
     const closeAndReset = async (noRevert?: boolean) => {
-        if (!noRevert) await ipcRenderer.invoke("revert-to-last-state")
-        await ipcRenderer.invoke("close-current-dialog")
+        if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
+        await window.ipcRenderer.invoke("close-current-dialog")
         setState(initialState)
     }
     
@@ -113,7 +112,7 @@ const CropDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-                ipcRenderer.invoke("apply-crop", state)
+                window.ipcRenderer.invoke("apply-crop", state)
         }
         closeAndReset(button === "accept")
     }
@@ -189,4 +188,5 @@ const CropDialog: React.FunctionComponent = (props) => {
     )
 }
 
-ReactDom.render(<CropDialog/>, document.getElementById("root"))
+const root = createRoot(document.getElementById("root")!)
+root.render(<CropDialog/>)

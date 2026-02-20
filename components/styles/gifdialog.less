@@ -1,0 +1,170 @@
+@import "../../index.less";
+@import "./titlebar.less";
+
+.gif-dialog {
+    position: fixed;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding-top: @title-bar-height;
+    background-color: transparent;
+    pointer-events: none;
+    z-index: 500;
+}
+
+.gif-dialog-box {
+    -webkit-app-region: drag;
+    z-index: 1000;
+    position: absolute;
+    pointer-events: all;
+    right: 0; // 170px;
+    top: 0; // 60px;
+    width: 190px;
+    height: 175px;
+    border-radius: 10px;
+    background-color: var(--title-color);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gif-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.gif-title-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    &:hover {
+        cursor: move;
+    }
+}
+
+.gif-title {
+    color: var(--text-color);
+    font-size: 17px;
+    font-family: "Maven Pro", sans-serif;
+    &::selection {
+        background-color: #6ec5ff;
+    }
+}
+
+.gif-row-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.gif-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 100%;
+    margin-top: 5px;
+}
+
+.gif-text {
+    user-select: text;
+    cursor: text;
+    color: var(--text-color);
+    font-family: "Maven Pro", sans-serif;
+    font-size: 12px;
+    &::selection {
+        background-color: #6ebeff;
+    }
+}
+
+
+.gif-button-container {
+    display: flex;
+    margin-top: 10px;
+    justify-content: space-evenly;
+    width: 100%;
+}
+
+.reject-button {
+    -webkit-app-region: no-drag;
+    border: none;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 5px;
+    padding-right: 5px;
+    color: var(--button-text);
+    text-align: center;
+    font-size: 15px;
+    height: 30px;
+    font-family: "Maven Pro", sans-serif;
+    background-color: var(--button-color);
+    border: 3px solid #090409;
+    &:hover {
+        color: white;
+        border: 3px solid white;
+        cursor: pointer;
+    }
+}
+
+.accept-button {
+    -webkit-app-region: no-drag;
+    border: none;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 5px;
+    padding-right: 5px;
+    color: var(--button-text);
+    text-align: center;
+    font-size: 15px;
+    height: 30px;
+    font-family: "Maven Pro", sans-serif;
+    background-color: var(--button-color);
+    border: 3px solid #090409;
+    &:hover {
+        color: white;
+        border: 3px solid white;
+        cursor: pointer;
+    }
+}
+
+.gif-input {
+    -webkit-app-region: no-drag;
+    color: var(--text-color);
+    border: none;
+    width: 25px;
+    margin-left: 10px;
+    font-family: "Maven Pro", sans-serif;
+    font-size: 15px;
+    background-color: transparent;
+}
+
+.gif-checkbox-container {
+    margin-left: 10px;
+}
+
+.gif-checkbox {
+    -webkit-app-region: no-drag;
+    cursor: pointer;
+}
+
+.gif-color-box {
+    -webkit-app-region: no-drag;
+    margin-left: 10px;
+	width: 12px;
+	height: 12px;
+}

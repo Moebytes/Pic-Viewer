@@ -1,7 +1,6 @@
-import {ipcRenderer} from "electron"
 import Slider from "rc-slider"
-import React, {useEffect, useState, useRef, useContext} from "react"
-import ReactDom from "react-dom"
+import React, {useEffect, useState} from "react"
+import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
 import downArrow from "../assets/icons/downArrow.png"
 import downArrowHover from "../assets/icons/downArrow-hover.png"
@@ -11,9 +10,9 @@ import leftArrow from "../assets/icons/leftArrow.png"
 import leftArrowHover from "../assets/icons/leftArrow-hover.png"
 import rightArrow from "../assets/icons/rightArrow.png"
 import rightArrowHover from "../assets/icons/rightArrow-hover.png"
-import "../styles/rotatedialog.less"
+import "./styles/rotatedialog.less"
 
-const RotateDialog: React.FunctionComponent = (props) => {
+const RotateDialog: React.FunctionComponent = () => {
     const initialState = {
         degrees: 0
     }
@@ -26,22 +25,22 @@ const RotateDialog: React.FunctionComponent = (props) => {
 
     useEffect(() => {
         const initTheme = async () => {
-            const theme = await ipcRenderer.invoke("get-theme")
-            const transparency = await ipcRenderer.invoke("get-transparency")
+            const theme = await window.ipcRenderer.invoke("get-theme")
+            const transparency = await window.ipcRenderer.invoke("get-transparency")
             functions.updateTheme(theme, transparency)
         }
         initTheme()
         const savedValues = async () => {
-            const savedRotation = await ipcRenderer.invoke("get-temp", "rotation")
+            const savedRotation = await window.ipcRenderer.invoke("get-temp", "rotation")
             if (savedRotation) changeState("degrees", Number(savedRotation))
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparency: boolean) => {
             functions.updateTheme(theme, transparency)
         }
-        ipcRenderer.on("update-theme", updateTheme)
+        window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
-            ipcRenderer.removeListener("update-theme", updateTheme)
+            window.ipcRenderer.removeListener("update-theme", updateTheme)
         }
     }, [])
 
@@ -61,12 +60,12 @@ const RotateDialog: React.FunctionComponent = (props) => {
             click("reject")
         }
         document.addEventListener("keydown", keyDown)
-        ipcRenderer.on("enter-pressed", enterPressed)
-        ipcRenderer.on("escape-pressed", escapePressed)
+        window.ipcRenderer.on("enter-pressed", enterPressed)
+        window.ipcRenderer.on("escape-pressed", escapePressed)
         return () => {
             document.removeEventListener("keydown", keyDown)
-            ipcRenderer.removeListener("enter-pressed", enterPressed)
-            ipcRenderer.removeListener("escape-pressed", escapePressed)
+            window.ipcRenderer.removeListener("enter-pressed", enterPressed)
+            window.ipcRenderer.removeListener("escape-pressed", escapePressed)
         }
     })
 
@@ -76,15 +75,15 @@ const RotateDialog: React.FunctionComponent = (props) => {
                 setState((prev) => {
                     return {...prev, degrees: value}
                 })
-                ipcRenderer.invoke("apply-rotate", {...state, degrees: value, realTime: true})
-                ipcRenderer.invoke("get-temp", "rotation", String(value))
+                window.ipcRenderer.invoke("apply-rotate", {...state, degrees: value, realTime: true})
+                window.ipcRenderer.invoke("get-temp", "rotation", String(value))
                 break
         }
     }
 
     const closeAndReset = async (noRevert?: boolean) => {
-        if (!noRevert) await ipcRenderer.invoke("revert-to-last-state")
-        await ipcRenderer.invoke("close-current-dialog")
+        if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
+        await window.ipcRenderer.invoke("close-current-dialog")
         setState(initialState)
     }
     
@@ -96,7 +95,7 @@ const RotateDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            ipcRenderer.invoke("apply-rotate", state)
+            window.ipcRenderer.invoke("apply-rotate", state)
         }
         closeAndReset(button === "accept")
     }
@@ -126,7 +125,7 @@ const RotateDialog: React.FunctionComponent = (props) => {
                             <input className="rotate-input" type="text" spellCheck="false" onChange={(event) => changeState("degrees", Number(event.target.value))} value={state.degrees} onKeyDown={degreeKey}/>
                         </div>
                         <div className="rotate-row">
-                            <Slider className="rotate-slider" onChange={(value) => {changeState("degrees", value)}} min={-180} max={180} step={1} value={state.degrees}/>
+                            <Slider className="rotate-slider" onChange={(value) => {changeState("degrees", value as number)}} min={-180} max={180} step={1} value={state.degrees}/>
                         </div>
                     </div>
                     <div className="rotate-arrow-container">
@@ -145,4 +144,5 @@ const RotateDialog: React.FunctionComponent = (props) => {
     )
 }
 
-ReactDom.render(<RotateDialog/>, document.getElementById("root"))
+const root = createRoot(document.getElementById("root")!)
+root.render(<RotateDialog/>)

@@ -1,7 +1,7 @@
-import React, { PureComponent } from "react";
+import React, {PureComponent} from "react";
 import PropTypes from "prop-types";
-import { LazyBrush } from "lazy-brush";
-import { Catenary } from "catenary-curve";
+import {LazyBrush} from "lazy-brush";
+import {Catenary} from "catenary-curve";
 
 import ResizeObserver from "resize-observer-polyfill";
 

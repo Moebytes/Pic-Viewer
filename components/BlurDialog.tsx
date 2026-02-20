@@ -1,9 +1,8 @@
-import {ipcRenderer} from "electron"
 import Slider from "rc-slider"
-import React, {useEffect, useState, useRef, useContext} from "react"
-import ReactDom from "react-dom"
+import React, {useEffect, useState} from "react"
+import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "../styles/blurdialog.less"
+import "./styles/blurdialog.less"
 
 const BlurDialog: React.FunctionComponent = (props) => {
     const initialState = {
@@ -15,14 +14,14 @@ const BlurDialog: React.FunctionComponent = (props) => {
 
     useEffect(() => {
         const initTheme = async () => {
-            const theme = await ipcRenderer.invoke("get-theme")
-            const transparency = await ipcRenderer.invoke("get-transparency")
+            const theme = await window.ipcRenderer.invoke("get-theme")
+            const transparency = await window.ipcRenderer.invoke("get-transparency")
             functions.updateTheme(theme, transparency)
         }
         initTheme()
         const savedValues = async () => {
-            const savedBlur= await ipcRenderer.invoke("get-temp", "blur")
-            const savedSharpen = await ipcRenderer.invoke("get-temp", "sharpen")
+            const savedBlur= await window.ipcRenderer.invoke("get-temp", "blur")
+            const savedSharpen = await window.ipcRenderer.invoke("get-temp", "sharpen")
             if (savedBlur) changeState("blur", Number(savedBlur))
             if (savedSharpen) changeState("sharpen", Number(savedSharpen))
         }
@@ -30,9 +29,9 @@ const BlurDialog: React.FunctionComponent = (props) => {
         const updateTheme = (event: any, theme: string, transparency: boolean) => {
             functions.updateTheme(theme, transparency)
         }
-        ipcRenderer.on("update-theme", updateTheme)
+        window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
-            ipcRenderer.removeListener("update-theme", updateTheme)
+            window.ipcRenderer.removeListener("update-theme", updateTheme)
         }
     }, [])
 
@@ -52,12 +51,12 @@ const BlurDialog: React.FunctionComponent = (props) => {
             click("reject")
         }
         document.addEventListener("keydown", keyDown)
-        ipcRenderer.on("enter-pressed", enterPressed)
-        ipcRenderer.on("escape-pressed", escapePressed)
+        window.ipcRenderer.on("enter-pressed", enterPressed)
+        window.ipcRenderer.on("escape-pressed", escapePressed)
         return () => {
             document.removeEventListener("keydown", keyDown)
-            ipcRenderer.removeListener("enter-pressed", enterPressed)
-            ipcRenderer.removeListener("escape-pressed", escapePressed)
+            window.ipcRenderer.removeListener("enter-pressed", enterPressed)
+            window.ipcRenderer.removeListener("escape-pressed", escapePressed)
         }
     })
 
@@ -67,22 +66,22 @@ const BlurDialog: React.FunctionComponent = (props) => {
                 setState((prev) => {
                     return {...prev, blur: value}
                 })
-                ipcRenderer.invoke("apply-blur", {...state, blur: value, realTime: true})
-                ipcRenderer.invoke("save-temp", "blur", String(value))
+                window.ipcRenderer.invoke("apply-blur", {...state, blur: value, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "blur", String(value))
                 break
             case "sharpen":
                 setState((prev) => {
                     return {...prev, sharpen: value}
                 })
-                ipcRenderer.invoke("apply-blur", {...state, sharpen: value, realTime: true})
-                ipcRenderer.invoke("save-temp", "sharoen", String(value))
+                window.ipcRenderer.invoke("apply-blur", {...state, sharpen: value, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "sharoen", String(value))
                 break
         }
     }
 
     const closeAndReset = async (noRevert?: boolean) => {
-        if (!noRevert) await ipcRenderer.invoke("revert-to-last-state")
-        await ipcRenderer.invoke("close-current-dialog")
+        if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
+        await window.ipcRenderer.invoke("close-current-dialog")
         setState(initialState)
     }
     
@@ -94,7 +93,7 @@ const BlurDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            ipcRenderer.invoke("apply-blur", state)
+            window.ipcRenderer.invoke("apply-blur", state)
         }
         closeAndReset(button === "accept")
     }
@@ -109,11 +108,11 @@ const BlurDialog: React.FunctionComponent = (props) => {
                     <div className="blur-row-container">
                         <div className="blur-row">
                             <p className="blur-text">Blur: </p>
-                            <Slider className="blur-slider" onChange={(value) => {changeState("blur", value)}} min={0.3} max={15} step={0.1} value={state.blur}/>
+                            <Slider className="blur-slider" onChange={(value) => {changeState("blur", value as number)}} min={0.3} max={15} step={0.1} value={state.blur}/>
                         </div>
                         <div className="blur-row">
                             <p className="blur-text">Sharpen: </p>
-                            <Slider className="blur-slider" onChange={(value) => {changeState("sharpen", value)}} min={0.3} max={15} step={0.1} value={state.sharpen}/>
+                            <Slider className="blur-slider" onChange={(value) => {changeState("sharpen", value as number)}} min={0.3} max={15} step={0.1} value={state.sharpen}/>
                         </div>
                     </div>
                     <div className="blur-button-container">
@@ -126,4 +125,5 @@ const BlurDialog: React.FunctionComponent = (props) => {
     )
 }
 
-ReactDom.render(<BlurDialog/>, document.getElementById("root"))
+const root = createRoot(document.getElementById("root")!)
+root.render(<BlurDialog/>)

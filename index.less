@@ -1,22 +1,41 @@
 @import "~rc-slider/assets/index.css";
-@import "assets/fonts/fira-sans.less";
-@import "assets/fonts/maven-pro.less";
-@import "assets/fonts/skranji.less";
-@import "assets/fonts/yusei-magic.less";
+
+@font-face {
+    font-family: "GenEi M Gothic v2";
+    src: url("assets/fonts/GenEiMGothic2-Medium.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Honoka Shin Antique-Kaku";
+    src: url("assets/fonts/Honoka-Shin-Antique-Kaku_M.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Tsunagi Gothic Black";
+    src: url("assets/fonts/TsunagiGothic.ttf") format("truetype");
+}
+
+@title-bar-height: 30px;
 
 :root {
-    --title-color: #3177f5;
-    --text-color: black;
-    --button-color: #4486ff;
-    --button-text: black;
     --selection-color: #3491fc;
-    --bg-color: #7294cf;
-    --version-color: #3a8fff;
-    --version-text: black;
-    --version-accept: #4486ff;
-    --version-reject: #338bff;
-    --version-accept-text: black;
-    --version-reject-text: black;
+	--closeButton: #496dff;
+	--minimizeButton: #398bff;
+	--maximizeButton: #2ea8ff;
+	--navColor: #9abaff;
+	--iconColor: #4a83ff;
+	--background: #ffffff;
+    --textColor: #000000;
+}
+
+.dark {
+	--closeButton: #496dff;
+	--minimizeButton: #398bff;
+	--maximizeButton: #2ea8ff;
+	--navColor: #091329;
+	--iconColor: #4c85ff;
+	--background: #000000;
+    --textColor: #ffffff;
 }
 
 * {
@@ -31,7 +50,7 @@
 }
 
 html, body {
-    background-color: var(--bg-color);
+    background-color: var(--background);
     overflow-x: hidden;  
     overflow-y: hidden;
     height: 100%;
@@ -61,7 +80,7 @@ p {
 }
 
 ::selection {
-    background-color: var(--selection-color);
+    background-color: var(--selectionColor);
     color: white;
 }
 
@@ -109,7 +128,7 @@ ul {
 }
 
 input[type="color"] {
-	-webkit-appearance: none;
+	appearance: none;
 	border: none;
     &:focus {
         border: none;
@@ -120,6 +139,7 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 	border: none;
 	padding: 0;
 }
+
 input[type="color"]::-webkit-color-swatch {
 	border: none;
 }

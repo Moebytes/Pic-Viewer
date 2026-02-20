@@ -1,10 +1,9 @@
-import {ipcRenderer} from "electron"
-import React, {useEffect, useState, useRef, useContext} from "react"
-import ReactDom from "react-dom"
+import React, {useEffect, useState} from "react"
+import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "../styles/tintdialog.less"
+import "./styles/tintdialog.less"
 
-const TintDialog: React.FunctionComponent = (props) => {
+const TintDialog: React.FunctionComponent = () => {
     const initialState = {
         tint: "#ffffff"
     }
@@ -13,24 +12,24 @@ const TintDialog: React.FunctionComponent = (props) => {
     const [clickCounter, setClickCounter] = useState(2)
 
     useEffect(() => {
-        setTimeout(() => {ipcRenderer.invoke("apply-tint", {...state, realTime: true})}, 100)
+        setTimeout(() => {window.ipcRenderer.invoke("apply-tint", {...state, realTime: true})}, 100)
         const initTheme = async () => {
-            const theme = await ipcRenderer.invoke("get-theme")
-            const transparency = await ipcRenderer.invoke("get-transparency")
+            const theme = await window.ipcRenderer.invoke("get-theme")
+            const transparency = await window.ipcRenderer.invoke("get-transparency")
             functions.updateTheme(theme, transparency)
         }
         initTheme()
         const savedValues = async () => {
-            const savedTint = await ipcRenderer.invoke("get-temp", "tint")
+            const savedTint = await window.ipcRenderer.invoke("get-temp", "tint")
             if (savedTint) changeState("tint", Number(savedTint))
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparency: boolean) => {
             functions.updateTheme(theme, transparency)
         }
-        ipcRenderer.on("update-theme", updateTheme)
+        window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
-            ipcRenderer.removeListener("update-theme", updateTheme)
+            window.ipcRenderer.removeListener("update-theme", updateTheme)
         }
     }, [])
 
@@ -50,12 +49,12 @@ const TintDialog: React.FunctionComponent = (props) => {
             click("reject")
         }
         document.addEventListener("keydown", keyDown)
-        ipcRenderer.on("enter-pressed", enterPressed)
-        ipcRenderer.on("escape-pressed", escapePressed)
+        window.ipcRenderer.on("enter-pressed", enterPressed)
+        window.ipcRenderer.on("escape-pressed", escapePressed)
         return () => {
             document.removeEventListener("keydown", keyDown)
-            ipcRenderer.removeListener("enter-pressed", enterPressed)
-            ipcRenderer.removeListener("escape-pressed", escapePressed)
+            window.ipcRenderer.removeListener("enter-pressed", enterPressed)
+            window.ipcRenderer.removeListener("escape-pressed", escapePressed)
         }
     })
 
@@ -65,15 +64,15 @@ const TintDialog: React.FunctionComponent = (props) => {
                 setState((prev) => {
                     return {...prev, tint: value}
                 })
-                ipcRenderer.invoke("apply-tint", {...state, tint: value, realTime: true})
-                ipcRenderer.invoke("save-temp", "tint", String(value))
+                window.ipcRenderer.invoke("apply-tint", {...state, tint: value, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "tint", String(value))
                 break
         }
     }
 
     const closeAndReset = async (noRevert?: boolean) => {
-        if (!noRevert) await ipcRenderer.invoke("revert-to-last-state")
-        await ipcRenderer.invoke("close-current-dialog")
+        if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
+        await window.ipcRenderer.invoke("close-current-dialog")
         setState(initialState)
     }
     
@@ -85,7 +84,7 @@ const TintDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            ipcRenderer.invoke("apply-tint", state)
+            window.ipcRenderer.invoke("apply-tint", state)
         }
         closeAndReset(button === "accept")
     }
@@ -113,4 +112,5 @@ const TintDialog: React.FunctionComponent = (props) => {
     )
 }
 
-ReactDom.render(<TintDialog/>, document.getElementById("root"))
+const root = createRoot(document.getElementById("root")!)
+root.render(<TintDialog/>)

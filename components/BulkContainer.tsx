@@ -1,6 +1,5 @@
-import React, {useEffect, useState, useRef} from "react"
-import {ipcRenderer} from "electron"
-import "../styles/bulkcontainer.less"
+import React from "react"
+import "./styles/bulkcontainer.less"
 
 interface BulkProps {
     files: string[]

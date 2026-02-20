@@ -1,14 +1,13 @@
-import {ipcRenderer} from "electron"
-import React, {useEffect, useState, useRef, useContext} from "react"
-import ReactDom from "react-dom"
+import React, {useEffect, useState} from "react"
+import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
 import chain from "../assets/icons/chain.png"
 import chainHover from "../assets/icons/chain-hover.png"
 import chainTop from "../assets/icons/chainTop.png"
 import chainBottom from "../assets/icons/chainBottom.png"
-import "../styles/resizedialog.less"
+import "./styles/resizedialog.less"
 
-const ResizeDialog: React.FunctionComponent = (props) => {
+const ResizeDialog: React.FunctionComponent = () => {
     const initialState = {
         width: 0,
         height: 0,
@@ -22,7 +21,7 @@ const ResizeDialog: React.FunctionComponent = (props) => {
     const [hoverChain, setHoverChain] = useState(false)
 
     useEffect(() => {
-        ipcRenderer.invoke("get-metadata").then((metadata: any) => {
+        window.ipcRenderer.invoke("get-metadata").then((metadata: any) => {
             if (metadata.length > 1) {
                 setState((prev) => {
                     return {...prev, width: 100, height: 100, originalWidth: 100, originalHeight: 100, percent: true}
@@ -34,22 +33,22 @@ const ResizeDialog: React.FunctionComponent = (props) => {
             }
         })
         const initTheme = async () => {
-            const theme = await ipcRenderer.invoke("get-theme")
-            const transparency = await ipcRenderer.invoke("get-transparency")
+            const theme = await window.ipcRenderer.invoke("get-theme")
+            const transparency = await window.ipcRenderer.invoke("get-transparency")
             functions.updateTheme(theme, transparency)
         }
         initTheme()
         const savedValues = async () => {
-            const savedResize = await ipcRenderer.invoke("get-temp", "resize")
+            const savedResize = await window.ipcRenderer.invoke("get-temp", "resize")
             if (savedResize) changeState("resize", JSON.parse(savedResize))
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparency: boolean) => {
             functions.updateTheme(theme, transparency)
         }
-        ipcRenderer.on("update-theme", updateTheme)
+        window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
-            ipcRenderer.removeListener("update-theme", updateTheme)
+            window.ipcRenderer.removeListener("update-theme", updateTheme)
         }
     }, [])
 
@@ -69,12 +68,12 @@ const ResizeDialog: React.FunctionComponent = (props) => {
             click("reject")
         }
         document.addEventListener("keydown", keyDown)
-        ipcRenderer.on("enter-pressed", enterPressed)
-        ipcRenderer.on("escape-pressed", escapePressed)
+        window.ipcRenderer.on("enter-pressed", enterPressed)
+        window.ipcRenderer.on("escape-pressed", escapePressed)
         return () => {
             document.removeEventListener("keydown", keyDown)
-            ipcRenderer.removeListener("enter-pressed", enterPressed)
-            ipcRenderer.removeListener("escape-pressed", escapePressed)
+            window.ipcRenderer.removeListener("enter-pressed", enterPressed)
+            window.ipcRenderer.removeListener("escape-pressed", escapePressed)
         }
     })
 
@@ -84,15 +83,15 @@ const ResizeDialog: React.FunctionComponent = (props) => {
                 setState((prev) => {
                     return {...prev, width: newState.width, height: newState.height}
                 })
-                ipcRenderer.invoke("apply-resize", {...state, width: newState.width, height: newState.height, percent: state.percent, realTime: true})
-                ipcRenderer.invoke("save-temp", "resize", JSON.stringify(newState))
+                window.ipcRenderer.invoke("apply-resize", {...state, width: newState.width, height: newState.height, percent: state.percent, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "resize", JSON.stringify(newState))
                 break
         }
     }
 
     const closeAndReset = async (noRevert?: boolean) => {
-        if (!noRevert) await ipcRenderer.invoke("revert-to-last-state")
-        await ipcRenderer.invoke("close-current-dialog")
+        if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
+        await window.ipcRenderer.invoke("close-current-dialog")
         setState(initialState)
     }
     
@@ -104,7 +103,7 @@ const ResizeDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-                ipcRenderer.invoke("apply-resize", state)
+                window.ipcRenderer.invoke("apply-resize", state)
         }
         closeAndReset(button === "accept")
     }
@@ -192,4 +191,5 @@ const ResizeDialog: React.FunctionComponent = (props) => {
     )
 }
 
-ReactDom.render(<ResizeDialog/>, document.getElementById("root"))
+const root = createRoot(document.getElementById("root")!)
+root.render(<ResizeDialog/>)

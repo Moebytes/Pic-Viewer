@@ -1,26 +1,25 @@
-import {ipcRenderer} from "electron"
 import Draggable from "react-draggable"
-import React, {useEffect, useState, useRef} from "react"
-import ReactDom from "react-dom"
+import React, {useEffect, useState} from "react"
+import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "../styles/bulksavedialog.less"
+import "./styles/bulksavedialog.less"
 
 const BulkSaveDialog: React.FunctionComponent = (props) => {
     const [hover, setHover] = useState(false)
 
     useEffect(() => {
         const initTheme = async () => {
-            const theme = await ipcRenderer.invoke("get-theme")
-            const transparency = await ipcRenderer.invoke("get-transparency")
+            const theme = await window.ipcRenderer.invoke("get-theme")
+            const transparency = await window.ipcRenderer.invoke("get-transparency")
             functions.updateTheme(theme, transparency)
         }
         initTheme()
         const updateTheme = (event: any, theme: string, transparency: boolean) => {
             functions.updateTheme(theme, transparency)
         }
-        ipcRenderer.on("update-theme", updateTheme)
+        window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
-            ipcRenderer.removeListener("update-theme", updateTheme)
+            window.ipcRenderer.removeListener("update-theme", updateTheme)
         }
     }, [])
 
@@ -40,17 +39,17 @@ const BulkSaveDialog: React.FunctionComponent = (props) => {
             click("reject")
         }
         document.addEventListener("keydown", keyDown)
-        ipcRenderer.on("enter-pressed", enterPressed)
-        ipcRenderer.on("escape-pressed", escapePressed)
+        window.ipcRenderer.on("enter-pressed", enterPressed)
+        window.ipcRenderer.on("escape-pressed", escapePressed)
         return () => {
             document.removeEventListener("keydown", keyDown)
-            ipcRenderer.removeListener("enter-pressed", enterPressed)
-            ipcRenderer.removeListener("escape-pressed", escapePressed)
+            window.ipcRenderer.removeListener("enter-pressed", enterPressed)
+            window.ipcRenderer.removeListener("escape-pressed", escapePressed)
         }
     })
 
     const closeAndReset = async () => {
-        await ipcRenderer.invoke("close-current-dialog")
+        await window.ipcRenderer.invoke("close-current-dialog")
     }
     
     const close = () => {
@@ -61,9 +60,9 @@ const BulkSaveDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            ipcRenderer.invoke("bulk-save-overwrite")
+            window.ipcRenderer.invoke("bulk-save-overwrite")
         } else {
-            ipcRenderer.invoke("bulk-save-directory")
+            window.ipcRenderer.invoke("bulk-save-directory")
         }
         closeAndReset()
     }
@@ -92,4 +91,5 @@ const BulkSaveDialog: React.FunctionComponent = (props) => {
     )
 }
 
-ReactDom.render(<BulkSaveDialog/>, document.getElementById("root"))
+const root = createRoot(document.getElementById("root")!)
+root.render(<BulkSaveDialog/>)

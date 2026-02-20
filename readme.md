@@ -2,7 +2,7 @@
 
 <img src="assets/images/readme.png">
 
-This is a simple photo viewer app.
+A simple image viewer app.
 
 ### Features:
 - View images (PNG, JPG, WEBP, TIFF) and animated GIFs
@@ -48,22 +48,18 @@ Our design is available here: https://www.figma.com/design/kqGaBzYxe93zSPxDPz6wR
 
 ### Installation
 
-Download the latest installer from the [releases](https://github.com/Moebytes/Photo-Viewer/releases) tab. Updates can be installed automatically.
+Download from [releases](https://github.com/Moebytes/Pic-Viewer/releases).
 
 ### MacOS
 
 On MacOS unsigned applications won't open, run this to remove the quarantine flag.
 ```
-xattr -d com.apple.quarantine "/Applications/Photo Viewer.app"
+xattr -d com.apple.quarantine "/Applications/Pic Viewer.app"
 ```
 
-### Bugs and Requests
+### See Also
 
-Open an issue on my GitHub repository.
-
-### Also See
-
-- [Music Player](https://github.com/Moebytes/Music-Player)
-- [Video Player](https://github.com/Moebytes/Video-Player)
+- [Tune Player](https://github.com/Moebytes/Tune-Player)
+- [Motion Player](https://github.com/Moebytes/Motion-Player)
 
 

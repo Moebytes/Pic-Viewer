@@ -1,7 +1,5 @@
 import React, {useEffect, useState, useRef, useContext} from "react"
-import {ipcRenderer, clipboard, nativeImage} from "electron" 
-import {DrawingContext, ErasingContext, BrushColorContext} from "../renderer"
-import {app} from "@electron/remote"
+import {useDrawingSelector, useDrawingActions} from "../store"
 import ReactCrop from "react-image-crop"
 import path from "path"
 import brightnessButton from "../assets/icons/brightness.png"
@@ -42,18 +40,19 @@ import nextButton from "../assets/icons/next.png"
 import nextButtonHover from "../assets/icons/next-hover.png"
 import functions from "../structures/functions"
 import CanvasDraw from "../structures/CanvasDraw"
-import fs from "fs"
 import {TransformWrapper, TransformComponent} from "react-zoom-pan-pinch"
 import BulkContainer from "./BulkContainer"
 import {useDropzone} from "react-dropzone"
 import "react-image-crop/dist/ReactCrop.css"
-import "../styles/photoviewer.less"
+import "./styles/photoviewer.less"
 
 const imageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".avif", ".tiff", ".gif"]
 
 let oldY = 0
 
-const PhotoViewer: React.FunctionComponent = (props) => {
+const PhotoViewer: React.FunctionComponent = () => {
+    const {drawing, erasing, brushColor} = useDrawingSelector()
+    const {setDrawing, setErasing} = useDrawingActions()
     const [brightnessHover, setBrightnessHover] = useState(false)
     const [hueHover, setHueHover] = useState(false)
     const [tintHover, setTintHover] = useState(false)
@@ -82,9 +81,6 @@ const PhotoViewer: React.FunctionComponent = (props) => {
     const [rotateEnabled, setRotateEnabled] = useState(false)
     const [bulk, setBulk] = useState(false)
     const [bulkFiles, setBulkFiles] = useState(null) as any
-    const {drawing, setDrawing} = useContext(DrawingContext)
-    const {erasing, setErasing} = useContext(ErasingContext)
-    const {brushColor, setBrushColor} = useContext(BrushColorContext)
     const [brushSize, setBrushSize] = useState(25)
     const [width, setWidth] = useState(0)
     const [height, setHeight] = useState(0)
@@ -93,9 +89,9 @@ const PhotoViewer: React.FunctionComponent = (props) => {
 
     useEffect(() => {
         const getOpenedFile = async () => {
-            const file = await ipcRenderer.invoke("get-opened-file")
+            const file = await window.ipcRenderer.invoke("get-opened-file")
             if (file && imageExtensions.includes(path.extname(file).toLowerCase())) {
-                upload (file)
+                upload(file)
             }
         }
         getOpenedFile()
@@ -109,16 +105,16 @@ const PhotoViewer: React.FunctionComponent = (props) => {
             if (link) {
                 let img = link
                 if (link.includes("pixiv.net") || link.includes("pximg.net")) {
-                    const {name, url, siteUrl} = await functions.parsePixivLink(link)
-                    ipcRenderer.invoke("set-original-name", name)
-                    ipcRenderer.invoke("set-original-link", siteUrl)
+                    const {name, url, siteUrl} = await window.ipcRenderer.invoke("parse-pixiv-link")
+                    window.ipcRenderer.invoke("set-original-name", name)
+                    window.ipcRenderer.invoke("set-original-link", siteUrl)
                     img = url
                 } else {
-                    ipcRenderer.invoke("set-original-link", img)
-                    ipcRenderer.invoke("set-original-name", null)
+                    window.ipcRenderer.invoke("set-original-link", img)
+                    window.ipcRenderer.invoke("set-original-name", null)
                 }
                 setImage(img)
-                ipcRenderer.invoke("update-original-images", img)
+                window.ipcRenderer.invoke("update-original-images", img)
                 resetZoom()
                 resetRotation()
                 setBulk(false)
@@ -126,13 +122,13 @@ const PhotoViewer: React.FunctionComponent = (props) => {
             }
         }
         const triggerPaste = () => {
-            const img = clipboard.readImage()
+            const img = window.clipboard.readImage()
             if (img.isEmpty()) return
             const base64 = functions.bufferToBase64(img.toPNG(), "png")
             setImage(base64)
-            ipcRenderer.invoke("update-original-images", base64)
-            ipcRenderer.invoke("set-original-name", null)
-            ipcRenderer.invoke("set-original-link", null)
+            window.ipcRenderer.invoke("update-original-images", base64)
+            window.ipcRenderer.invoke("set-original-name", null)
+            window.ipcRenderer.invoke("set-original-link", null)
             resetZoom()
             resetRotation()
             setBulk(false)
@@ -145,60 +141,60 @@ const PhotoViewer: React.FunctionComponent = (props) => {
         const doubleClick = () => {
             resetRotation()
         }
-        ipcRenderer.on("open-file", openFile)
-        ipcRenderer.on("open-link", openLink)
-        ipcRenderer.on("upload-file", uploadFile)
-        ipcRenderer.on("trigger-paste", triggerPaste)
-        ipcRenderer.on("apply-brightness", brightness)
-        ipcRenderer.on("apply-hsl", hue)
-        ipcRenderer.on("apply-tint", tint)
-        ipcRenderer.on("apply-blur", blur)
-        ipcRenderer.on("apply-pixelate", pixelate)
-        ipcRenderer.on("apply-resize", resize)
-        ipcRenderer.on("apply-rotate", rotate)
-        ipcRenderer.on("apply-binarize", binarize)
-        ipcRenderer.on("apply-crop", bulkCrop)
-        ipcRenderer.on("zoom-in", zoomIn)
-        ipcRenderer.on("zoom-out", zoomOut)
-        ipcRenderer.on("reset-bounds", resetBounds)
-        ipcRenderer.on("bulk-process", bulkProcess)
-        ipcRenderer.on("draw", draw)
-        ipcRenderer.on("draw-undo", undoDraw)
-        ipcRenderer.on("draw-clear", clearDraw)
-        ipcRenderer.on("draw-increase-size", increaseBrushSize)
-        ipcRenderer.on("draw-decrease-size", decreaseBrushSize)
+        window.ipcRenderer.on("open-file", openFile)
+        window.ipcRenderer.on("open-link", openLink)
+        window.ipcRenderer.on("upload-file", uploadFile)
+        window.ipcRenderer.on("trigger-paste", triggerPaste)
+        window.ipcRenderer.on("apply-brightness", brightness)
+        window.ipcRenderer.on("apply-hsl", hue)
+        window.ipcRenderer.on("apply-tint", tint)
+        window.ipcRenderer.on("apply-blur", blur)
+        window.ipcRenderer.on("apply-pixelate", pixelate)
+        window.ipcRenderer.on("apply-resize", resize)
+        window.ipcRenderer.on("apply-rotate", rotate)
+        window.ipcRenderer.on("apply-binarize", binarize)
+        window.ipcRenderer.on("apply-crop", bulkCrop)
+        window.ipcRenderer.on("zoom-in", zoomIn)
+        window.ipcRenderer.on("zoom-out", zoomOut)
+        window.ipcRenderer.on("reset-bounds", resetBounds)
+        window.ipcRenderer.on("bulk-process", bulkProcess)
+        window.ipcRenderer.on("draw", draw)
+        window.ipcRenderer.on("draw-undo", undoDraw)
+        window.ipcRenderer.on("draw-clear", clearDraw)
+        window.ipcRenderer.on("draw-increase-size", increaseBrushSize)
+        window.ipcRenderer.on("draw-decrease-size", decreaseBrushSize)
         document.addEventListener("dblclick", doubleClick)
         return () => {
-            ipcRenderer.removeListener("open-file", openFile)
-            ipcRenderer.removeListener("upload-file", openFile)
-            ipcRenderer.removeListener("open-link", openLink)
-            ipcRenderer.removeListener("trigger-paste", triggerPaste)
-            ipcRenderer.removeListener("apply-brightness", brightness)
-            ipcRenderer.removeListener("apply-hsl", hue)
-            ipcRenderer.removeListener("apply-tint", tint)
-            ipcRenderer.removeListener("apply-blur", blur)
-            ipcRenderer.removeListener("apply-pixelate", pixelate)
-            ipcRenderer.removeListener("apply-resize", resize)
-            ipcRenderer.removeListener("apply-rotate", rotate)
-            ipcRenderer.removeListener("apply-binarize", binarize)
-            ipcRenderer.removeListener("zoom-in", zoomIn)
-            ipcRenderer.removeListener("zoom-out", zoomOut)
-            ipcRenderer.removeListener("reset-bounds", resetBounds)
-            ipcRenderer.removeListener("bulk-process", bulkProcess)
-            ipcRenderer.removeListener("draw", draw)
-            ipcRenderer.removeListener("draw-undo", undoDraw)
-            ipcRenderer.removeListener("draw-clear", clearDraw)
-            ipcRenderer.removeListener("draw-increase-size", increaseBrushSize)
-            ipcRenderer.removeListener("draw-decrease-size", decreaseBrushSize)
+            window.ipcRenderer.removeListener("open-file", openFile)
+            window.ipcRenderer.removeListener("upload-file", openFile)
+            window.ipcRenderer.removeListener("open-link", openLink)
+            window.ipcRenderer.removeListener("trigger-paste", triggerPaste)
+            window.ipcRenderer.removeListener("apply-brightness", brightness)
+            window.ipcRenderer.removeListener("apply-hsl", hue)
+            window.ipcRenderer.removeListener("apply-tint", tint)
+            window.ipcRenderer.removeListener("apply-blur", blur)
+            window.ipcRenderer.removeListener("apply-pixelate", pixelate)
+            window.ipcRenderer.removeListener("apply-resize", resize)
+            window.ipcRenderer.removeListener("apply-rotate", rotate)
+            window.ipcRenderer.removeListener("apply-binarize", binarize)
+            window.ipcRenderer.removeListener("zoom-in", zoomIn)
+            window.ipcRenderer.removeListener("zoom-out", zoomOut)
+            window.ipcRenderer.removeListener("reset-bounds", resetBounds)
+            window.ipcRenderer.removeListener("bulk-process", bulkProcess)
+            window.ipcRenderer.removeListener("draw", draw)
+            window.ipcRenderer.removeListener("draw-undo", undoDraw)
+            window.ipcRenderer.removeListener("draw-clear", clearDraw)
+            window.ipcRenderer.removeListener("draw-increase-size", increaseBrushSize)
+            window.ipcRenderer.removeListener("draw-decrease-size", decreaseBrushSize)
             document.removeEventListener("dblclick", doubleClick)
-            ipcRenderer.removeListener("apply-crop", bulkCrop)
+            window.ipcRenderer.removeListener("apply-crop", bulkCrop)
         }
     }, [])
 
     useEffect(() => {
-        ipcRenderer.on("draw-invert", invertDraw)
+        window.ipcRenderer.on("draw-invert", invertDraw)
         return () => {
-            ipcRenderer.removeListener("draw-invert", invertDraw)
+            window.ipcRenderer.removeListener("draw-invert", invertDraw)
         }
     }, [brushColor])
 
@@ -211,11 +207,11 @@ const PhotoViewer: React.FunctionComponent = (props) => {
             if (drawing) return
             redo()
         }
-        ipcRenderer.on("trigger-undo", triggerUndo)
-        ipcRenderer.on("trigger-redo", triggerRedo)
+        window.ipcRenderer.on("trigger-undo", triggerUndo)
+        window.ipcRenderer.on("trigger-redo", triggerRedo)
         return () => {
-            ipcRenderer.removeListener("trigger-undo", triggerUndo)
-            ipcRenderer.removeListener("trigger-redo", triggerRedo)
+            window.ipcRenderer.removeListener("trigger-undo", triggerUndo)
+            window.ipcRenderer.removeListener("trigger-redo", triggerRedo)
         }
     }, [drawing])
 
@@ -244,44 +240,44 @@ const PhotoViewer: React.FunctionComponent = (props) => {
             if (bulk) {
                 if (!img) return
                 if (img.startsWith("data:")) {
-                    clipboard.writeImage(nativeImage.createFromBuffer(functions.base64ToBuffer(img)))
+                    window.clipboard.writeImage(window.nativeImage.createFromBuffer(functions.base64ToBuffer(img)))
                 } else {
-                    clipboard.writeImage(nativeImage.createFromPath(img.replace("file:///", "")))
+                    window.clipboard.writeImage(window.nativeImage.createFromPath(img.replace("file:///", "")))
                 }
             } else {
                 if (image.startsWith("data:")) {
-                    clipboard.writeImage(nativeImage.createFromBuffer(functions.base64ToBuffer(image)))
+                    window.clipboard.writeImage(window.nativeImage.createFromBuffer(functions.base64ToBuffer(image)))
                 } else {
-                    clipboard.writeImage(nativeImage.createFromPath(image.replace("file:///", "")))
+                    window.clipboard.writeImage(window.nativeImage.createFromPath(image.replace("file:///", "")))
                 }
             }
         }
         const copyAddress = async (event: any, img: any) => {
             if (bulk) {
                 if (!img) return
-                clipboard.writeText(img)
+                window.clipboard.writeText(img)
             } else {
-                const originalLink = await ipcRenderer.invoke("get-original-link")
+                const originalLink = await window.ipcRenderer.invoke("get-original-link")
                 if (originalLink) {
-                    clipboard.writeText(originalLink)
+                    window.clipboard.writeText(originalLink)
                 } else {
-                    const img = await ipcRenderer.invoke("get-original-images")
-                    clipboard.writeText(img[0])
+                    const img = await window.ipcRenderer.invoke("get-original-images")
+                    window.clipboard.writeText(img[0])
                 }
             }
         }
         const updateImages = (event: any, images: string) => {
             if (images) bulk ? setBulkFiles(images) : setImage(images[0])
         }
-        ipcRenderer.on("copy-image", copyImage)
-        ipcRenderer.on("copy-address", copyAddress)
-        ipcRenderer.on("save-img", save)
-        ipcRenderer.on("update-images", updateImages)
+        window.ipcRenderer.on("copy-image", copyImage)
+        window.ipcRenderer.on("copy-address", copyAddress)
+        window.ipcRenderer.on("save-img", save)
+        window.ipcRenderer.on("update-images", updateImages)
         return () => {
-            ipcRenderer.removeListener("copy-image", copyImage)
-            ipcRenderer.removeListener("copy-address", copyAddress)
-            ipcRenderer.removeListener("save-img", save)
-            ipcRenderer.removeListener("update-images", updateImages)
+            window.ipcRenderer.removeListener("copy-image", copyImage)
+            window.ipcRenderer.removeListener("copy-address", copyAddress)
+            window.ipcRenderer.removeListener("save-img", save)
+            window.ipcRenderer.removeListener("update-images", updateImages)
         }
     }, [image, bulk, bulkFiles])
 
@@ -292,11 +288,11 @@ const PhotoViewer: React.FunctionComponent = (props) => {
                     return {...prev, aspect: prev.aspect ? undefined : 1}
                 })
             } else if (response === "accept") {
-                const newImages = await ipcRenderer.invoke("crop", cropState)
+                const newImages = await window.ipcRenderer.invoke("crop", cropState)
                 if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
             }
             toggleCrop(false)
-            ipcRenderer.invoke("clear-accept-action")
+            window.ipcRenderer.invoke("clear-accept-action")
         }
         const commitDraw = async (response: "accept" | "cancel" | "square") => {
             if (response === "accept") {
@@ -304,7 +300,7 @@ const PhotoViewer: React.FunctionComponent = (props) => {
             }
             setDrawing(false)
             setErasing(false)
-            ipcRenderer.invoke("clear-accept-action")
+            window.ipcRenderer.invoke("clear-accept-action")
         }
         const acceptActionResponse = (event: any, action: string, response: "accept" | "cancel" | "square") => {
             if (action === "crop") {
@@ -317,12 +313,12 @@ const PhotoViewer: React.FunctionComponent = (props) => {
             if (event.key === "Enter") {
                 if (cropEnabled) commitCrop("accept")
                 if (drawing) commitDraw("accept")
-                ipcRenderer.invoke("enter-pressed")
+                window.ipcRenderer.invoke("enter-pressed")
             }
             if (event.key === "Escape") {
                 if (cropEnabled) commitCrop("cancel")
                 if (drawing) commitDraw("cancel")
-                ipcRenderer.invoke("escape-pressed")
+                window.ipcRenderer.invoke("escape-pressed")
                 resetRotation()
             }
             if (event.code === "Space") {
@@ -418,14 +414,14 @@ const PhotoViewer: React.FunctionComponent = (props) => {
                 }
             }*/
         }
-        ipcRenderer.on("accept-action-response", acceptActionResponse)
+        window.ipcRenderer.on("accept-action-response", acceptActionResponse)
         document.addEventListener("wheel", wheel)
         document.addEventListener("keydown", keyDown)
         document.addEventListener("keyup", keyUp)
         document.addEventListener("mousemove", mouseMove)
         document.addEventListener("click", onClick)
         return () => {
-            ipcRenderer.removeListener("accept-action-response", acceptActionResponse)
+            window.ipcRenderer.removeListener("accept-action-response", acceptActionResponse)
             document.removeEventListener("wheel", wheel)
             document.removeEventListener("keydown", keyDown)
             document.removeEventListener("keyup", keyUp)
@@ -436,25 +432,25 @@ const PhotoViewer: React.FunctionComponent = (props) => {
 
     const upload = async (files?: string | string[]) => {
         if (typeof files === "string") files = [files]
-        if (!files) files = await ipcRenderer.invoke("select-file") as string[]
+        if (!files) files = await window.ipcRenderer.invoke("select-file") as string[]
         if (!files) return
         files = files.filter((f) => imageExtensions.includes(path.extname(f).toLowerCase()))
         if (files.length > 1) {
             setBulkFiles(files)
             setBulk(true)
-            return ipcRenderer.invoke("update-original-images", files)
+            return window.ipcRenderer.invoke("update-original-images", files)
         }
         const file = files[0]
         if (!imageExtensions.includes(path.extname(file).toLowerCase())) return
         let newImg = file
         if (path.extname(file) === ".tiff") {
-            newImg = await ipcRenderer.invoke("tiff-to-png", file)
-            ipcRenderer.invoke("set-original-name", path.basename(file, path.extname(file)))
+            newImg = await window.ipcRenderer.invoke("tiff-to-png", file)
+            window.ipcRenderer.invoke("set-original-name", path.basename(file, path.extname(file)))
         }
         setImage(newImg)
-        ipcRenderer.invoke("resize-window", newImg)
-        ipcRenderer.invoke("update-original-images", newImg)
-        ipcRenderer.invoke("set-original-link", null)
+        window.ipcRenderer.invoke("resize-window", newImg)
+        window.ipcRenderer.invoke("update-original-images", newImg)
+        window.ipcRenderer.invoke("set-original-link", null)
         resetZoom()
         resetRotation()
         setBulk(false)
@@ -462,72 +458,72 @@ const PhotoViewer: React.FunctionComponent = (props) => {
     }
 
     const bulkCrop = async (event: any, state: any) => {
-        const newImages = await ipcRenderer.invoke("crop", state)
+        const newImages = await window.ipcRenderer.invoke("crop", state)
         if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
     }
 
     const brightness = async (event?: any, state?: any) => {
         if (!state) {
-            ipcRenderer.invoke("show-brightness-dialog")
+            window.ipcRenderer.invoke("show-brightness-dialog")
         } else {
-            const newImages = await ipcRenderer.invoke("brightness", state)
+            const newImages = await window.ipcRenderer.invoke("brightness", state)
             if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
         }
     }
 
     const hue = async (event?: any, state?: any) => {
         if (!state) {
-            ipcRenderer.invoke("show-hsl-dialog")
+            window.ipcRenderer.invoke("show-hsl-dialog")
         } else {
-            const newImages = await ipcRenderer.invoke("hsl", state)
+            const newImages = await window.ipcRenderer.invoke("hsl", state)
             if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
         }
     }
 
     const tint = async (event?: any, state?: any) => {
         if (!state) {
-            ipcRenderer.invoke("show-tint-dialog")
+            window.ipcRenderer.invoke("show-tint-dialog")
         } else {
-            const newImages = await ipcRenderer.invoke("tint", state)
+            const newImages = await window.ipcRenderer.invoke("tint", state)
             if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
         }
     }
 
     const blur = async (event?: any, state?: any) => {
         if (!state) {
-            ipcRenderer.invoke("show-blur-dialog")
+            window.ipcRenderer.invoke("show-blur-dialog")
         } else {
-            const newImages = await ipcRenderer.invoke("blur", state)
+            const newImages = await window.ipcRenderer.invoke("blur", state)
             if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
         }
     }
 
     const pixelate = async (event?: any, state?: any) => {
         if (!state) {
-            ipcRenderer.invoke("show-pixelate-dialog")
+            window.ipcRenderer.invoke("show-pixelate-dialog")
         } else {
-            const newImages = await ipcRenderer.invoke("pixelate", state)
+            const newImages = await window.ipcRenderer.invoke("pixelate", state)
             if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
         }
     }
 
     const invert = async () => {
-        const newImages = await ipcRenderer.invoke("invert")
+        const newImages = await window.ipcRenderer.invoke("invert")
         if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
     }
 
     const binarize = async (event?: any, state?: any) => {
         if (!state) {
-            ipcRenderer.invoke("show-binarize-dialog")
+            window.ipcRenderer.invoke("show-binarize-dialog")
         } else {
-            const newImages = await ipcRenderer.invoke("binarize", state)
+            const newImages = await window.ipcRenderer.invoke("binarize", state)
             if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
         }
     }
 
     const toggleCrop = (value?: boolean) => {
         if (bulk) {
-            ipcRenderer.invoke("show-crop-dialog")
+            window.ipcRenderer.invoke("show-crop-dialog")
         } else {
             let newState = value !== undefined ? value : !cropEnabled
             if (newState === true) {
@@ -538,64 +534,64 @@ const PhotoViewer: React.FunctionComponent = (props) => {
                 })
                 setCropEnabled(true)
                 functions.cropDrag(true)
-                ipcRenderer.invoke("trigger-accept-action", "crop")
+                window.ipcRenderer.invoke("trigger-accept-action", "crop")
             } else {
                 const selection = document.querySelector(".ReactCrop__crop-selection") as HTMLDivElement
                 selection.style.opacity = "0"
                 setCropEnabled(false)
                 functions.cropDrag(false)
-                ipcRenderer.invoke("clear-accept-action")
+                window.ipcRenderer.invoke("clear-accept-action")
             }
         }
     }
 
     const resize = async (event?: any, state?: any) => {
         if (!state) {
-            ipcRenderer.invoke("show-resize-dialog")
+            window.ipcRenderer.invoke("show-resize-dialog")
         } else {
-            const newImages = await ipcRenderer.invoke("resize", state)
+            const newImages = await window.ipcRenderer.invoke("resize", state)
             if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
         }
     }
 
     const rotate = async (event?: any, state?: any) => {
         if (!state) {
-            ipcRenderer.invoke("show-rotate-dialog")
+            window.ipcRenderer.invoke("show-rotate-dialog")
         } else {
-            const newImages = await ipcRenderer.invoke("rotate", state)
+            const newImages = await window.ipcRenderer.invoke("rotate", state)
             if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
         }
     }
 
     const flipX = async () => {
-        const newImages = await ipcRenderer.invoke("flipX")
+        const newImages = await window.ipcRenderer.invoke("flipX")
         if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
     }
 
     const flipY = async () => {
-        const newImages = await ipcRenderer.invoke("flipY")
+        const newImages = await window.ipcRenderer.invoke("flipY")
         if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
     }
 
     const undo = async () => {
-        const newImages = await ipcRenderer.invoke("undo")
+        const newImages = await window.ipcRenderer.invoke("undo")
         if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
     }
 
     const redo = async () => {
-        const newImages = await ipcRenderer.invoke("redo")
+        const newImages = await window.ipcRenderer.invoke("redo")
         if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
     }
 
     const save = async () => {
         if (bulk) {
-            ipcRenderer.invoke("show-bulk-save-dialog")
+            window.ipcRenderer.invoke("show-bulk-save-dialog")
         } else {
-            let defaultPath = await ipcRenderer.invoke("get-original-images").then((r) => r[0])
+            let defaultPath = await window.ipcRenderer.invoke("get-original-images").then((r) => r[0])
             if (defaultPath.startsWith("data:") || defaultPath.startsWith("http")) {
                 let name = null as any
                 if (defaultPath.startsWith("data:")) {
-                    const originalName = await ipcRenderer.invoke("get-original-name")
+                    const originalName = await window.ipcRenderer.invoke("get-original-name")
                     if (originalName) {
                         name = originalName
                     } else {
@@ -604,26 +600,26 @@ const PhotoViewer: React.FunctionComponent = (props) => {
                 } else {
                     name = path.basename(defaultPath)
                 }
-                defaultPath = `${app.getPath("downloads")}/${name}`
+                defaultPath = `${window.app.getPath("downloads")}/${name}`
             }
-            let savePath = await ipcRenderer.invoke("save-dialog", defaultPath)
+            let savePath = await window.ipcRenderer.invoke("save-dialog", defaultPath)
             if (!savePath) return
             if (!path.extname(savePath)) savePath += path.extname(defaultPath)
-            ipcRenderer.invoke("save-image", image, savePath)
+            window.ipcRenderer.invoke("save-image", image, savePath)
         }
         
     }
 
     const reset = async () => {
-        const newImages = await ipcRenderer.invoke("reset")
+        const newImages = await window.ipcRenderer.invoke("reset")
         if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
     }
 
     const previous = async () => {
-        const previous = await ipcRenderer.invoke("previous")
+        const previous = await window.ipcRenderer.invoke("previous")
         if (previous) {
             setImage(previous)
-            ipcRenderer.invoke("update-original-images", previous)
+            window.ipcRenderer.invoke("update-original-images", previous)
             resetZoom()
             resetRotation()
             setBulk(false)
@@ -632,10 +628,10 @@ const PhotoViewer: React.FunctionComponent = (props) => {
     }
 
     const next = async () => {
-        const next = await ipcRenderer.invoke("next")
+        const next = await window.ipcRenderer.invoke("next")
         if (next) {
             setImage(next)
-            ipcRenderer.invoke("update-original-images", next)
+            window.ipcRenderer.invoke("update-original-images", next)
             resetZoom()
             resetRotation()
             setBulk(false)
@@ -660,10 +656,7 @@ const PhotoViewer: React.FunctionComponent = (props) => {
     }
 
     const bulkProcess = async () => {
-        const directory = await ipcRenderer.invoke("select-directory")
-        if (!directory) return
-        let files = fs.readdirSync(directory)
-        files = files.filter((f) => imageExtensions.includes(path.extname(f).toLowerCase())).map((f) => `${path.dirname(directory)}/${f}`)
+        const files = await window.ipcRenderer.invoke("select-image-files")
         if (!files.length) return
         setBulkFiles(files)
         setBulk(true)
@@ -687,11 +680,11 @@ const PhotoViewer: React.FunctionComponent = (props) => {
 
     const draw = () => {
         if (drawing) {
-            setErasing((prev: boolean) => !prev)
+            setErasing(!erasing)
         } else {
             setDrawing(true)
             resetZoom()
-            ipcRenderer.invoke("trigger-accept-action", "draw")
+            window.ipcRenderer.invoke("trigger-accept-action", "draw")
         }
     }
 
@@ -744,7 +737,7 @@ const PhotoViewer: React.FunctionComponent = (props) => {
         imgCtx.drawImage(layerCanvas, 0, 0, imgCanvas.width, imgCanvas.height)
 
         const outputURL = imgCanvas.toDataURL("image/png")
-        const newImages = await ipcRenderer.invoke("append-history-state", outputURL)
+        const newImages = await window.ipcRenderer.invoke("append-history-state", outputURL)
         if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
     }
 

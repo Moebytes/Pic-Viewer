@@ -1,10 +1,9 @@
-import {ipcRenderer} from "electron"
-import React, {useEffect, useState, useRef, useContext} from "react"
-import ReactDom from "react-dom"
+import React, {useEffect, useState} from "react"
+import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
 import checkbox from "../assets/icons/checkbox.png"
 import checkboxChecked from "../assets/icons/checkbox-checked.png"
-import "../styles/gifdialog.less"
+import "./styles/gifdialog.less"
 
 const GIFDialog: React.FunctionComponent = (props) => {
     const initialState = {
@@ -18,22 +17,22 @@ const GIFDialog: React.FunctionComponent = (props) => {
     const [clickCounter, setClickCounter] = useState(2)
 
     useEffect(() => {
-        ipcRenderer.invoke("get-gif-options").then((options) => {
+        window.ipcRenderer.invoke("get-gif-options").then((options) => {
             setState((prev) => {
                 return {...prev, transparency: options.transparency, transparentColor: options.transparentColor}
             })
         })
         const initTheme = async () => {
-            const theme = await ipcRenderer.invoke("get-theme")
-            const transparency = await ipcRenderer.invoke("get-transparency")
+            const theme = await window.ipcRenderer.invoke("get-theme")
+            const transparency = await window.ipcRenderer.invoke("get-transparency")
             functions.updateTheme(theme, transparency)
         }
         initTheme()
         const savedValues = async () => {
-            const savedSpeed = await ipcRenderer.invoke("get-temp", "speed")
-            const savedReverse = await ipcRenderer.invoke("get-temp", "reverse")
-            const savedTransparency = await ipcRenderer.invoke("get-temp", "transparency")
-            const savedTransparentColor = await ipcRenderer.invoke("get-temp", "transparentColor")
+            const savedSpeed = await window.ipcRenderer.invoke("get-temp", "speed")
+            const savedReverse = await window.ipcRenderer.invoke("get-temp", "reverse")
+            const savedTransparency = await window.ipcRenderer.invoke("get-temp", "transparency")
+            const savedTransparentColor = await window.ipcRenderer.invoke("get-temp", "transparentColor")
             if (savedSpeed) changeState("speed", Number(savedSpeed))
             if (savedReverse) changeState("reverse", savedReverse === "true")
             if (savedTransparency) changeState("transparency", savedTransparency === "true")
@@ -47,9 +46,9 @@ const GIFDialog: React.FunctionComponent = (props) => {
             setClickCounter((prev) => prev + 1)
         }
         document.addEventListener("click", clickCounter)
-        ipcRenderer.on("update-theme", updateTheme)
+        window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
-            ipcRenderer.removeListener("update-theme", updateTheme)
+            window.ipcRenderer.removeListener("update-theme", updateTheme)
             document.removeEventListener("click", clickCounter)
         }
     }, [])
@@ -70,12 +69,12 @@ const GIFDialog: React.FunctionComponent = (props) => {
             click("reject")
         }
         document.addEventListener("keydown", keyDown)
-        ipcRenderer.on("enter-pressed", enterPressed)
-        ipcRenderer.on("escape-pressed", escapePressed)
+        window.ipcRenderer.on("enter-pressed", enterPressed)
+        window.ipcRenderer.on("escape-pressed", escapePressed)
         return () => {
             document.removeEventListener("keydown", keyDown)
-            ipcRenderer.removeListener("enter-pressed", enterPressed)
-            ipcRenderer.removeListener("escape-pressed", escapePressed)
+            window.ipcRenderer.removeListener("enter-pressed", enterPressed)
+            window.ipcRenderer.removeListener("escape-pressed", escapePressed)
         }
     })
 
@@ -85,38 +84,38 @@ const GIFDialog: React.FunctionComponent = (props) => {
                 setState((prev) => {
                     return {...prev, speed: value}
                 })
-                ipcRenderer.invoke("save-temp", "speed", String(value))
+                window.ipcRenderer.invoke("save-temp", "speed", String(value))
                 break
             case "reverse":
                 setState((prev) => {
                     return {...prev, reverse: value}
                 })
-                ipcRenderer.invoke("save-temp", "reverse", String(value))
+                window.ipcRenderer.invoke("save-temp", "reverse", String(value))
                 break
             case "transparency":
                 setState((prev) => {
                     return {...prev, transparency: value}
                 })
-                ipcRenderer.invoke("save-temp", "transparency", String(value))
+                window.ipcRenderer.invoke("save-temp", "transparency", String(value))
                 break
             case "transparentColor":
                 setState((prev) => {
                     return {...prev, transparentColor: value}
                 })
-                ipcRenderer.invoke("save-temp", "transparentColor", String(value))
+                window.ipcRenderer.invoke("save-temp", "transparentColor", String(value))
                 break
         }
     }
 
     const closeAndReset = () => {
-        ipcRenderer.invoke("close-current-dialog")
+        window.ipcRenderer.invoke("close-current-dialog")
         setState(initialState)
     }
     
     const close = () => {
         setTimeout(() => {
             if (!hover && clickCounter > 1) {
-                ipcRenderer.invoke("set-gif-options", state)
+                window.ipcRenderer.invoke("set-gif-options", state)
                 closeAndReset()
             }
         }, 100)
@@ -124,9 +123,9 @@ const GIFDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            ipcRenderer.invoke("gif-effects", state)
+            window.ipcRenderer.invoke("gif-effects", state)
         }
-        ipcRenderer.invoke("set-gif-options", state)
+        window.ipcRenderer.invoke("set-gif-options", state)
         closeAndReset()
     }
 
@@ -180,4 +179,5 @@ const GIFDialog: React.FunctionComponent = (props) => {
     )
 }
 
-ReactDom.render(<GIFDialog/>, document.getElementById("root"))
+const root = createRoot(document.getElementById("root")!)
+root.render(<GIFDialog/>)

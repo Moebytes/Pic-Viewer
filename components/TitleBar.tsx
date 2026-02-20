@@ -1,122 +1,62 @@
-import {ipcRenderer, clipboard} from "electron"
-import {getCurrentWindow, shell} from "@electron/remote"
-import React, {useEffect, useState, useContext} from "react"
-import {HoverContext, BrushColorContext, DrawingContext, ErasingContext} from "../renderer"
-import closeButtonHover from "../assets/icons/close-hover.png"
-import closeButton from "../assets/icons/close.png"
-import appIcon from "../assets/icons/logo.png"
-import maximizeButtonHover from "../assets/icons/maximize-hover.png"
-import maximizeButton from "../assets/icons/maximize.png"
-import minimizeButtonHover from "../assets/icons/minimize-hover.png"
-import minimizeButton from "../assets/icons/minimize.png"
-import starButtonHover from "../assets/icons/star-hover.png"
-import starButton from "../assets/icons/star.png"
-import updateButtonHover from "../assets/icons/updates-hover.png"
-import updateButton from "../assets/icons/updates.png"
-import uploadButton from "../assets/icons/upload.png"
-import uploadButtonHover from "../assets/icons/upload-hover.png"
-import linkButton from "../assets/icons/link.png"
-import linkButtonHover from "../assets/icons/link-hover.png"
-import pasteButton from "../assets/icons/paste.png"
-import pasteButtonHover from "../assets/icons/paste-hover.png"
-import darkButton from "../assets/icons/dark.png"
-import darkButtonHover from "../assets/icons/dark-hover.png"
-import lightButton from "../assets/icons/light.png"
-import lightButtonHover from "../assets/icons/light-hover.png"
-import cancelButton from "../assets/icons/cancel.png"
-import cancelButtonHover from "../assets/icons/cancel-hover.png"
-import acceptButton from "../assets/icons/accept.png"
-import acceptButtonHover from "../assets/icons/accept-hover.png"
-import gifButton from "../assets/icons/gif.png"
-import gifButtonHover from "../assets/icons/gif-hover.png"
-import hundredButton from "../assets/icons/100.png"
-import hundredButtonHover from "../assets/icons/100-hover.png"
-import bulkButton from "../assets/icons/bulk.png"
-import bulkButtonHover from "../assets/icons/bulk-hover.png"
-import drawButton from "../assets/icons/draw.png"
-import drawButtonHover from "../assets/icons/draw-hover.png"
-import eraseButton from "../assets/icons/erase.png"
-import eraseButtonHover from "../assets/icons/erase-hover.png"
-import undoButton from "../assets/icons/draw-undo.png"
-import undoButtonHover from "../assets/icons/draw-undo-hover.png"
-import invertButton from "../assets/icons/draw-invert.png"
-import invertButtonHover from "../assets/icons/draw-invert-hover.png"
-import squareButton from "../assets/icons/square.png"
-import squareButtonHover from "../assets/icons/square-hover.png"
-import transparentButton from "../assets/icons/transparent.png"
-import transparentButtonHover from "../assets/icons/transparent-hover.png"
-import increaseSizeButton from "../assets/icons/draw-increase.png"
-import increaseSizeButtonHover from "../assets/icons/draw-increase-hover.png"
-import decreaseSizeButton from "../assets/icons/draw-decrease.png"
-import decreaseSizeButtonHover from "../assets/icons/draw-decrease-hover.png"
-import clearButton from "../assets/icons/draw-clear.png"
-import clearButtonHover from "../assets/icons/draw-clear-hover.png"
-import pack from "../package.json"
-import "../styles/titlebar.less"
-import functions from "../structures/functions"
+import React, {useEffect, useState} from "react"
+import {useActiveSelector, useDrawingSelector, useDrawingActions, 
+useThemeSelector, useThemeActions} from "../store"
+import CircleIcon from "../assets/svg/circle.svg"
+import CircleCloseIcon from "../assets/svg/circle-close.svg"
+import CircleMinimizeIcon from "../assets/svg/circle-minimize.svg"
+import CircleMaximizeIcon from "../assets/svg/circle-maximize.svg"
+import CloseIcon from "../assets/svg/close.svg"
+import MinimizeIcon from "../assets/svg/minimize.svg"
+import MaximizeIcon from "../assets/svg/maximize.svg"
+import Icon from "../assets/svg/icon.svg"
+import UploadIcon from "../assets/svg/upload.svg"
+import SearchIcon from "../assets/svg/search.svg"
+import PasteIcon from "../assets/svg/paste.svg"
+import DrawIcon from "../assets/svg/draw.svg"
+import EraseIcon from "../assets/svg/erase.svg"
+import DrawIncreaseIcon from "../assets/svg/draw-increase.svg"
+import DrawDecreaseIcon from "../assets/svg/draw-decrease.svg"
+import DrawUndoIcon from "../assets/svg/draw-undo.svg"
+import DrawInvertIcon from "../assets/svg/draw-invert.svg"
+import SquareIcon from "../assets/svg/square.svg"
+import CancelIcon from "../assets/svg/cancel.svg"
+import AcceptIcon from "../assets/svg/accept.svg"
+import GIFIcon from "../assets/svg/gif.svg"
+import TransparentIcon from "../assets/svg/transparent.svg"
+import LightIcon from "../assets/svg/light.svg"
+import DarkIcon from "../assets/svg/dark.svg"
+import WindowsIcon from "../assets/svg/windows.svg"
+import MacIcon from "../assets/svg/mac.svg"
+import "./styles/titlebar.less"
 
-const TitleBar: React.FunctionComponent = (props) => {
-    const {hover, setHover} = useContext(HoverContext)
-    const {erasing, setErasing} = useContext(ErasingContext)
-    const {drawing, setDrawing} = useContext(DrawingContext)
-    const {brushColor, setBrushColor} = useContext(BrushColorContext)
-    const [hoverClose, setHoverClose] = useState(false)
-    const [hoverMin, setHoverMin] = useState(false)
-    const [hoverMax, setHoverMax] = useState(false)
-    const [hoverReload, setHoverReload] = useState(false)
-    const [hoverStar, setHoverStar] = useState(false)
-    const [hoverUpload, setHoverUpload] = useState(false)
-    const [hoverLink, setHoverLink] = useState(false)
-    const [hoverPaste, setHoverPaste] = useState(false)
-    const [hoverTheme, setHoverTheme] = useState(false)
-    const [hoverCancel, setHoverCancel] = useState(false)
-    const [hoverAccept, setHoverAccept] = useState(false)
-    const [hoverSquare, setHoverSquare] = useState(false)
-    const [hoverGIF, setHoverGIF] = useState(false)
-    const [hoverDraw, setHoverDraw] = useState(false)
-    const [hoverUndo, setHoverUndo] = useState(false)
-    const [hoverInvert, setHoverInvert] = useState(false)
-    const [hoverTransparent, setHoverTransparent] = useState(false)
-    const [hoverIncreaseSize, setHoverIncreaseSize] = useState(false)
-    const [hoverDecreaseSize, setHoverDecreaseSize] = useState(false)
-    const [hoverClear, setHoverClear] = useState(false)
-    const [hoverHundred, setHoverHundred] = useState(false)
-    const [hoverBulk, setHoverBulk] = useState(false)
-    const [theme, setTheme] = useState("light")
-    const [transparency, setTransparency] = useState(false)
+const TitleBar: React.FunctionComponent = () => {
+    const {hover} = useActiveSelector()
+    const {drawing, erasing, brushColor} = useDrawingSelector()
+    const {setErasing, setBrushColor} = useDrawingActions()
+    const {theme, os, transparent} = useThemeSelector()
+    const {setTheme, setOS, setTransparent} = useThemeActions()
     const [acceptAction, setAcceptAction] = useState(null as any)
+    const [iconHover, setIconHover] = useState(false)
 
     useEffect(() => {
-        ipcRenderer.invoke("check-for-updates", true)
-        const initTheme = async () => {
-            const savedTransparency = await ipcRenderer.invoke("get-transparency")
-            const transparentValue = String(savedTransparency) === "true"
-            changeTransparency(transparentValue)
-            const savedTheme = await ipcRenderer.invoke("get-theme")
-            changeTheme(savedTheme, transparentValue)
-        }
-        initTheme()
         const triggerAcceptAction = (event: any, action: string) => {
             setAcceptAction(action)
         }
         const clearAcceptAction = (event: any, action: string) => {
             setAcceptAction(null)
-            setHoverCancel(false)
-            setHoverAccept(false)
-            setHoverSquare(false)
         }
-        ipcRenderer.on("trigger-accept-action", triggerAcceptAction)
-        ipcRenderer.on("clear-accept-action", clearAcceptAction)
+        window.ipcRenderer.on("trigger-accept-action", triggerAcceptAction)
+        window.ipcRenderer.on("clear-accept-action", clearAcceptAction)
         return () => {
-            ipcRenderer.removeListener("trigger-accept-action", triggerAcceptAction)
-            ipcRenderer.removeListener("clear-accept-action", clearAcceptAction)
+            window.ipcRenderer.removeListener("trigger-accept-action", triggerAcceptAction)
+            window.ipcRenderer.removeListener("clear-accept-action", clearAcceptAction)
         }
     }, [])
 
     useEffect(() => {
         const keyDown = async (event: globalThis.KeyboardEvent) => {
             if (event.key === "t") {
-                changeTransparency()
+                switchTransparency()
             }
         }
         document.addEventListener("keydown", keyDown)
@@ -125,165 +65,179 @@ const TitleBar: React.FunctionComponent = (props) => {
         }
     })
 
-    const minimize = () => {
-        getCurrentWindow().minimize()
-    }
-
-    const maximize = () => {
-        const window = getCurrentWindow()
-        if (window.isMaximized()) {
-            window.unmaximize()
-        } else {
-            window.maximize()
-        }
+    const onMouseDown = () => {
+        window.ipcRenderer.send("moveWindow")
     }
 
     const close = () => {
-        getCurrentWindow().close()
+        window.ipcRenderer.invoke("close")
     }
 
-    const star = () => {
-        shell.openExternal(pack.repository.url)
+    const minimize = async () => {
+        await window.ipcRenderer.invoke("minimize")
+        setIconHover(false)
     }
 
-    const update = () => {
-        ipcRenderer.invoke("check-for-updates", false)
+    const maximize = () => {
+        window.ipcRenderer.invoke("maximize")
     }
 
     const upload = () => {
-        ipcRenderer.invoke("upload-file")
+        window.ipcRenderer.invoke("upload-file")
     }
 
-    const link = () => {
-        ipcRenderer.invoke("show-link-dialog")
+    const search = () => {
+        window.ipcRenderer.invoke("show-link-dialog")
     }
 
     const paste = () => {
-        ipcRenderer.invoke("trigger-paste")
-    }
-
-    const changeTheme = (value?: string, transparentValue?: boolean) => {
-        let condition = value !== undefined ? value === "dark" : theme === "light"
-        let transVal = transparentValue !== undefined ? transparentValue : transparency
-        if (condition) {
-            functions.updateTheme("dark", transVal)
-            setTheme("dark")
-            ipcRenderer.invoke("save-theme", "dark")
-        } else {
-            functions.updateTheme("light", transVal)
-            setTheme("light")
-            ipcRenderer.invoke("save-theme", "light")
-        }
-    }
-
-    const changeTransparency = (value?: boolean) => {
-        let condition = value !== undefined ? value : !transparency
-        if (condition) {
-            functions.updateTheme(theme, true)
-            setTransparency(true)
-            ipcRenderer.invoke("save-transparency", true)
-        } else {
-            functions.updateTheme(theme, false)
-            setTransparency(false)
-            ipcRenderer.invoke("save-transparency", false)
-        }
-    }
-
-    /*
-    useEffect(() => {
-        const photo = document.querySelector(".photo") as any
-        if (!photo) return
-        if (transparency) {
-            photo.style["-webkit-app-region"] = "drag"
-        } else {
-            photo.style["-webkit-app-region"] = "no-drag"
-        }
-    }, [transparency])*/
-
-    const triggerAction = (response: "accept" | "cancel" | "square") => {
-        ipcRenderer.invoke("accept-action-response", acceptAction, response)
-        if (response !== "square") setAcceptAction(null)
+        window.ipcRenderer.invoke("trigger-paste")
     }
 
     const gif = () => {
-        ipcRenderer.invoke("show-gif-dialog")
+        window.ipcRenderer.invoke("show-gif-dialog")
     }
 
     const draw = () => {
-        if (drawing) return setErasing((prev: boolean) => !prev)
-        ipcRenderer.invoke("draw")
+        if (drawing) return setErasing(!erasing)
+        window.ipcRenderer.invoke("draw")
     }
 
     const undo = () => {
-        ipcRenderer.invoke("draw-undo")
+        window.ipcRenderer.invoke("draw-undo")
     }
 
     const invert = () => {
-        ipcRenderer.invoke("draw-invert")
-    }
-
-    const clear = () => {
-        ipcRenderer.invoke("draw-clear")
+        window.ipcRenderer.invoke("draw-invert")
     }
 
     const increaseSize = () => {
-        ipcRenderer.invoke("draw-increase-size")
+        window.ipcRenderer.invoke("draw-increase-size")
     }
 
     const decreaseSize = () => {
-        ipcRenderer.invoke("draw-decrease-size")
+        window.ipcRenderer.invoke("draw-decrease-size")
     }
 
-
-    const resetBounds = () => {
-        ipcRenderer.invoke("reset-bounds")
+    const switchTheme = () => {
+        setTheme(theme === "light" ? "dark" : "light")
     }
 
-    const bulk = () => {
-        ipcRenderer.invoke("bulk-process")
+    const switchOSStyle = () => {
+        setOS(os === "mac" ? "windows" : "mac")
     }
 
-    const drawIcon = () => {
-        if (drawing && erasing) return hoverDraw ? eraseButtonHover : eraseButton
-        return hoverDraw ? drawButtonHover : drawButton
+    const switchTransparency = () => {
+        setTransparent(!transparent)
+    }
+
+    const triggerAction = (response: "accept" | "cancel" | "square") => {
+        window.ipcRenderer.invoke("accept-action-response", acceptAction, response)
+        if (response !== "square") setAcceptAction(null)
+    }
+
+    const macTitleBar = () => {
+        return (
+            <div className="title-group-container">
+                <div className="title-mac-container" onMouseEnter={() => setIconHover(true)} onMouseLeave={() => setIconHover(false)}>
+                    {iconHover ? <>
+                    <CircleCloseIcon className="title-mac-button" color="var(--closeButton)" onClick={close}/>
+                    <CircleMinimizeIcon className="title-mac-button" color="var(--minimizeButton)" onClick={minimize}/>
+                    <CircleMaximizeIcon className="title-mac-button" color="var(--maximizeButton)" onClick={maximize}/>
+                    </> : <>
+                    <CircleIcon className="title-mac-button" color="var(--closeButton)" onClick={close}/>
+                    <CircleIcon className="title-mac-button" color="var(--minimizeButton)" onClick={minimize}/>
+                    <CircleIcon className="title-mac-button" color="var(--maximizeButton)" onClick={maximize}/>
+                    </>}
+                </div>
+                <div className="title-container">
+                    <Icon className="app-icon"/>
+                    <span className="title">Pic Viewer</span>
+                </div>
+                <div className="title-button-container">
+                    <UploadIcon className="title-bar-button" onClick={upload}/>
+                    <SearchIcon className="title-bar-button" onClick={search}/>
+                    <PasteIcon className="title-bar-button" onClick={paste}/>
+                    {drawing && erasing ? <EraseIcon className="title-bar-button" onClick={draw}/> : 
+                    <DrawIcon className="title-bar-button" onClick={draw}/>}
+                    <GIFIcon className="title-bar-button" onClick={gif}/>
+                    <TransparentIcon className="title-bar-button" onClick={switchTransparency}/>
+                    {theme === "light" ?
+                    <LightIcon className="title-bar-button" onClick={switchTheme}/> :
+                    <DarkIcon className="title-bar-button" onClick={switchTheme}/>}
+                    <MacIcon className="title-bar-button" onClick={switchOSStyle}/>
+
+                    {acceptAction === "draw" ? <>
+                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
+                    <DrawUndoIcon className="title-bar-button" onClick={undo}/>
+                    <DrawIncreaseIcon className="title-bar-button" onClick={increaseSize}/>
+                    <DrawDecreaseIcon className="title-bar-button" onClick={decreaseSize}/>
+                    <input type="color" className="draw-color-box" onChange={(event) => setBrushColor(event.target.value)} value={brushColor}></input>
+                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
+                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
+                    </> : null}
+                    {acceptAction === "crop" ? <>
+                    <SquareIcon className="title-bar-button" onClick={() => triggerAction("square")}/>
+                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
+                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
+                    </> : null}
+                </div>
+            </div>
+        )
+    }
+
+    const windowsTitleBar = () => {
+        return (
+            <>
+            <div className="title-group-container">
+                <div className="title-container">
+                    <Icon className="app-icon"/>
+                    <span className="title">Pic Viewer</span>
+                </div>
+                <div className="title-button-container">
+                    <UploadIcon className="title-bar-button" onClick={upload}/>
+                    <SearchIcon className="title-bar-button" onClick={search}/>
+                    <PasteIcon className="title-bar-button" onClick={paste}/>
+                    {drawing && erasing ? <EraseIcon className="title-bar-button" onClick={draw}/> : 
+                    <DrawIcon className="title-bar-button" onClick={draw}/>}
+                    <GIFIcon className="title-bar-button" onClick={gif}/>
+                    <TransparentIcon className="title-bar-button" onClick={switchTransparency}/>
+                    {theme === "light" ?
+                    <LightIcon className="title-bar-button" onClick={switchTheme}/> :
+                    <DarkIcon className="title-bar-button" onClick={switchTheme}/>}
+                    <WindowsIcon className="title-bar-button" onClick={switchOSStyle}/>
+
+                    {acceptAction === "draw" ? <>
+                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
+                    <DrawUndoIcon className="title-bar-button" onClick={undo}/>
+                    <DrawIncreaseIcon className="title-bar-button" onClick={increaseSize}/>
+                    <DrawDecreaseIcon className="title-bar-button" onClick={decreaseSize}/>
+                    <input type="color" className="draw-color-box" onChange={(event) => setBrushColor(event.target.value)} value={brushColor}></input>
+                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
+                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
+                    </> : null}
+                    {acceptAction === "crop" ? <>
+                    <SquareIcon className="title-bar-button" onClick={() => triggerAction("square")}/>
+                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
+                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
+                    </> : null}
+                </div>
+            </div>
+            <div className="title-group-container">
+                <div className="title-win-container">
+                    <MinimizeIcon className="title-win-button" color="var(--minimizeButton)" onClick={minimize}/>
+                    <MaximizeIcon className="title-win-button" color="var(--maximizeButton)" onClick={maximize} style={{marginLeft: "4px"}}/>
+                    <CloseIcon className="title-win-button" color="var(--closeButton)" onClick={close}/>
+                </div>
+            </div>
+            </>
+        )
     }
 
     return (
-        <section className={hover || process.platform === "win32" ? "title-bar visible" : "title-bar"} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+        <section className={hover ? "title-bar visible" : "title-bar"} onMouseDown={onMouseDown}>
                 <div className="title-bar-drag-area">
-                    <div className="title-container">
-                        <img className="app-icon" height="22" width="22" src={appIcon}/>
-                        <p><span className="title">Photo Viewer v{pack.version}</span></p>
-                    </div>
-                    <div className="title-bar-buttons">
-                        {acceptAction === "draw" ? <>
-                        <img style={{marginRight: "8px"}} src={hoverInvert ? invertButtonHover : invertButton} height="20" width="20" className="title-bar-button invert-button" onClick={invert} onMouseEnter={() => setHoverInvert(true)} onMouseLeave={() => setHoverInvert(false)}/>
-                        {/* <img style={{marginRight: "8px"}} src={hoverClear ? clearButtonHover : clearButton} height="20" width="20" className="title-bar-button clear-button" onClick={clear} onMouseEnter={() => setHoverClear(true)} onMouseLeave={() => setHoverClear(false)}/> */}
-                        <img style={{marginRight: "8px"}} src={hoverUndo ? undoButtonHover : undoButton} height="20" width="20" className="title-bar-button undo-button" onClick={undo} onMouseEnter={() => setHoverUndo(true)} onMouseLeave={() => setHoverUndo(false)}/>
-                        <img style={{marginRight: "5px"}} src={hoverIncreaseSize ? increaseSizeButtonHover : increaseSizeButton} height="20" width="20" className="title-bar-button increase-size-button" onClick={increaseSize} onMouseEnter={() => setHoverIncreaseSize(true)} onMouseLeave={() => setHoverIncreaseSize(false)}/>
-                        <img style={{marginRight: "8px"}} src={hoverDecreaseSize ? decreaseSizeButtonHover : decreaseSizeButton} height="20" width="20" className="title-bar-button decrease-size-button" onClick={decreaseSize} onMouseEnter={() => setHoverDecreaseSize(true)} onMouseLeave={() => setHoverDecreaseSize(false)}/>
-                        <input type="color" className="draw-color-box" onChange={(event) => setBrushColor(event.target.value)} value={brushColor}></input>
-                        <img src={hoverCancel ? cancelButtonHover : cancelButton} height="20" width="20" className="title-bar-button cancel-action-button" onClick={() => triggerAction("cancel")} onMouseEnter={() => setHoverCancel(true)} onMouseLeave={() => setHoverCancel(false)}/>
-                        <img src={hoverAccept ? acceptButtonHover : acceptButton} height="20" width="20" className="title-bar-button accept-action-button" onClick={() => triggerAction("accept")} onMouseEnter={() => setHoverAccept(true)} onMouseLeave={() => setHoverAccept(false)}/>
-                        </> : null}
-                        {acceptAction === "crop" ? <>
-                        <img src={hoverSquare ? squareButtonHover : squareButton} height="20" width="20" className="title-bar-button square-action-button" onClick={() => triggerAction("square")} onMouseEnter={() => setHoverSquare(true)} onMouseLeave={() => setHoverSquare(false)}/>
-                        <img src={hoverCancel ? cancelButtonHover : cancelButton} height="20" width="20" className="title-bar-button cancel-action-button" onClick={() => triggerAction("cancel")} onMouseEnter={() => setHoverCancel(true)} onMouseLeave={() => setHoverCancel(false)}/>
-                        <img src={hoverAccept ? acceptButtonHover : acceptButton} height="20" width="20" className="title-bar-button accept-action-button" onClick={() => triggerAction("accept")} onMouseEnter={() => setHoverAccept(true)} onMouseLeave={() => setHoverAccept(false)}/>
-                        </> : null}
-                        <img src={hoverTransparent ? transparentButtonHover : transparentButton} height="20" width="20" className="title-bar-button transparent-button" onClick={() => changeTransparency()} onMouseEnter={() => setHoverTransparent(true)} onMouseLeave={() => setHoverTransparent(false)}/>
-                        <img src={hoverTheme ? (theme === "light" ? darkButtonHover : lightButtonHover) : (theme === "light" ? darkButton : lightButton)} height="20" width="20" className="title-bar-button theme-button" onClick={() => changeTheme()} onMouseEnter={() => setHoverTheme(true)} onMouseLeave={() => setHoverTheme(false)}/>
-                        <img src={drawIcon()} height="20" width="20" className="title-bar-button draw-button" onClick={draw} onMouseEnter={() => setHoverDraw(true)} onMouseLeave={() => setHoverDraw(false)}/>
-                        <img src={hoverGIF ? gifButtonHover : gifButton} height="20" width="20" className="title-bar-button gif-button" onClick={gif} onMouseEnter={() => setHoverGIF(true)} onMouseLeave={() => setHoverGIF(false)}/>
-                        <img src={hoverPaste ? pasteButtonHover : pasteButton} height="20" width="20" className="title-bar-button paste-button" onClick={paste} onMouseEnter={() => setHoverPaste(true)} onMouseLeave={() => setHoverPaste(false)}/>
-                        <img src={hoverLink ? linkButtonHover : linkButton} height="20" width="20" className="title-bar-button link-button" onClick={link} onMouseEnter={() => setHoverLink(true)} onMouseLeave={() => setHoverLink(false)}/>
-                        <img src={hoverUpload ? uploadButtonHover : uploadButton} height="20" width="20" className="title-bar-button upload-button" onClick={upload} onMouseEnter={() => setHoverUpload(true)} onMouseLeave={() => setHoverUpload(false)}/>
-                        <img src={hoverStar ? starButtonHover : starButton} height="20" width="20" className="title-bar-button star-button" onClick={star} onMouseEnter={() => setHoverStar(true)} onMouseLeave={() => setHoverStar(false)}/>
-                        <img src={hoverReload ? updateButtonHover : updateButton} height="20" width="20" className="title-bar-button update-button" onClick={update} onMouseEnter={() => setHoverReload(true)} onMouseLeave={() => setHoverReload(false)}/>
-                        <img src={hoverMin ? minimizeButtonHover : minimizeButton} height="20" width="20" className="title-bar-button" onClick={minimize} onMouseEnter={() => setHoverMin(true)} onMouseLeave={() => setHoverMin(false)}/>
-                        <img src={hoverMax ? maximizeButtonHover : maximizeButton} height="20" width="20" className="title-bar-button" onClick={maximize} onMouseEnter={() => setHoverMax(true)} onMouseLeave={() => setHoverMax(false)}/>
-                        <img src={hoverClose ? closeButtonHover : closeButton} height="20" width="20" className="title-bar-button" onClick={close} onMouseEnter={() => setHoverClose(true)} onMouseLeave={() => setHoverClose(false)}/>
-                    </div>
+                    {os === "mac" ? macTitleBar() : windowsTitleBar()}
                 </div>
         </section>
     )

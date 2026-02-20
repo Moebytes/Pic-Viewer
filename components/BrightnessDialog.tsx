@@ -1,9 +1,8 @@
-import {ipcRenderer} from "electron"
 import Slider from "rc-slider"
-import React, {useEffect, useState, useRef, useContext} from "react"
-import ReactDom from "react-dom"
+import React, {useEffect, useState} from "react"
+import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "../styles/brightnessdialog.less"
+import "./styles/brightnessdialog.less"
 
 const BrightnessDialog: React.FunctionComponent = (props) => {
     const initialState = {
@@ -15,14 +14,14 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
 
     useEffect(() => {
         const initTheme = async () => {
-            const theme = await ipcRenderer.invoke("get-theme")
-            const transparency = await ipcRenderer.invoke("get-transparency")
+            const theme = await window.ipcRenderer.invoke("get-theme")
+            const transparency = await window.ipcRenderer.invoke("get-transparency")
             functions.updateTheme(theme, transparency)
         }
         initTheme()
         const savedValues = async () => {
-            const savedBrightness = await ipcRenderer.invoke("get-temp", "brightness")
-            const savedContrast = await ipcRenderer.invoke("get-temp", "contrast")
+            const savedBrightness = await window.ipcRenderer.invoke("get-temp", "brightness")
+            const savedContrast = await window.ipcRenderer.invoke("get-temp", "contrast")
             if (savedBrightness) changeState("brightness", Number(savedBrightness))
             if (savedContrast) changeState("contrast", Number(savedContrast))
         }
@@ -30,9 +29,9 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
         const updateTheme = (event: any, theme: string, transparency: boolean) => {
             functions.updateTheme(theme, transparency)
         }
-        ipcRenderer.on("update-theme", updateTheme)
+        window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
-            ipcRenderer.removeListener("update-theme", updateTheme)
+            window.ipcRenderer.removeListener("update-theme", updateTheme)
         }
     }, [])
 
@@ -52,12 +51,12 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
             click("reject")
         }
         document.addEventListener("keydown", keyDown)
-        ipcRenderer.on("enter-pressed", enterPressed)
-        ipcRenderer.on("escape-pressed", escapePressed)
+        window.ipcRenderer.on("enter-pressed", enterPressed)
+        window.ipcRenderer.on("escape-pressed", escapePressed)
         return () => {
             document.removeEventListener("keydown", keyDown)
-            ipcRenderer.removeListener("enter-pressed", enterPressed)
-            ipcRenderer.removeListener("escape-pressed", escapePressed)
+            window.ipcRenderer.removeListener("enter-pressed", enterPressed)
+            window.ipcRenderer.removeListener("escape-pressed", escapePressed)
         }
     })
     
@@ -67,22 +66,22 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
                 setState((prev) => {
                     return {...prev, brightness: value}
                 })
-                ipcRenderer.invoke("apply-brightness", {...state, brightness: value, realTime: true})
-                ipcRenderer.invoke("save-temp", "brightness", String(value))
+                window.ipcRenderer.invoke("apply-brightness", {...state, brightness: value, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "brightness", String(value))
                 break
             case "contrast":
                 setState((prev) => {
                     return {...prev, contrast: value}
                 })
-                ipcRenderer.invoke("apply-brightness", {...state, contrast: value, realTime: true})
-                ipcRenderer.invoke("save-temp", "contrast", String(value))
+                window.ipcRenderer.invoke("apply-brightness", {...state, contrast: value, realTime: true})
+                window.ipcRenderer.invoke("save-temp", "contrast", String(value))
                 break
         }
     }
 
     const closeAndReset = async (noRevert?: boolean) => {
-        if (!noRevert) await ipcRenderer.invoke("revert-to-last-state")
-        await ipcRenderer.invoke("close-current-dialog")
+        if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
+        await window.ipcRenderer.invoke("close-current-dialog")
         setState(initialState)
     }
     
@@ -94,7 +93,7 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            ipcRenderer.invoke("apply-brightness", state)
+            window.ipcRenderer.invoke("apply-brightness", state)
         }
         closeAndReset(button === "accept")
     }
@@ -109,11 +108,11 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
                     <div className="brightness-row-container">
                         <div className="brightness-row">
                             <p className="brightness-text">Brightness: </p>
-                            <Slider className="brightness-slider" onChange={(value) => {changeState("brightness", value)}} min={0.5} max={1.5} step={0.1} value={state.brightness}/>
+                            <Slider className="brightness-slider" onChange={(value) => {changeState("brightness", value as number)}} min={0.5} max={1.5} step={0.1} value={state.brightness}/>
                         </div>
                         <div className="brightness-row">
                             <p className="brightness-text">Contrast: </p>
-                            <Slider className="brightness-slider" onChange={(value) => {changeState("contrast", value)}} min={0.5} max={1.5} step={0.1} value={state.contrast}/>
+                            <Slider className="brightness-slider" onChange={(value) => {changeState("contrast", value as number)}} min={0.5} max={1.5} step={0.1} value={state.contrast}/>
                         </div>
                     </div>
                     <div className="brightness-button-container">
@@ -126,4 +125,5 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
     )
 }
 
-ReactDom.render(<BrightnessDialog/>, document.getElementById("root"))
+const root = createRoot(document.getElementById("root")!)
+root.render(<BrightnessDialog/>)

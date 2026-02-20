@@ -1,20 +1,18 @@
 import {app, BrowserWindow, dialog, globalShortcut, ipcMain, session, shell} from "electron"
-import {autoUpdater} from "electron-updater"
 import Store from "electron-store"
 import * as localShortcut from "electron-shortcuts"
+import dragAddon from "electron-click-drag-plugin"
 import path from "path"
 import process from "process"
 import functions from "./structures/functions"
-import "./dev-app-update.yml"
-import pack from "./package.json"
+import mainFunctions from "./structures/mainFunctions"
 import sharp from "sharp"
 import fs from "fs"
 
-require("@electron/remote/main").initialize()
 process.setMaxListeners(0)
 let window: Electron.BrowserWindow | null
 let currentDialog: Electron.BrowserWindow | null
-autoUpdater.autoDownload = false
+
 const store = new Store()
 let tempStore = {} as any
 let filePath = ""
@@ -26,6 +24,34 @@ let historyStates = [] as string[]
 let historyIndex = -1
 
 ipcMain.handle("debug", console.log)
+
+ipcMain.handle("close", (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.close()
+})
+
+ipcMain.handle("minimize", (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.minimize()
+})
+
+ipcMain.handle("maximize", (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+
+    if (win.isMaximized()) {
+      win.unmaximize()
+    } else {
+      win.maximize()
+    }
+})
+
+ipcMain.on("moveWindow", () => {
+  const handle = window?.getNativeWindowHandle()
+  if (!handle) return
+  const windowID = process.platform === "linux" ? handle.readUInt32LE(0) : handle
+  dragAddon.startDrag(windowID)
+})
 
 const updateHistoryState = (state: any) => {
   historyIndex++
@@ -42,7 +68,7 @@ const getGIFOptions = () => {
 const saveImage = async (image: any, savePath: string) => {
   if (image.startsWith("file:///")) image = image.replace("file:///", "")
   if (path.extname(savePath) === ".gif") {
-    functions.downloadImage(image, savePath)
+    mainFunctions.downloadImage(image, savePath)
   } else {
     if (image.startsWith("data:")) image = functions.base64ToBuffer(image)
     if (image === savePath) image = fs.readFileSync(image)
@@ -142,11 +168,12 @@ ipcMain.handle("show-bulk-save-dialog", async (event) => {
     if (currentDialog.type === "bulk-save") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 230, height: 170, x: Math.floor(bounds.width/2) + 200, y: Math.floor(bounds.height/2), resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "bulksavedialog.html"))
+  currentDialog = new BrowserWindow({width: 230, height: 170, x: Math.floor(bounds.width/2) + 200, y: Math.floor(bounds.height/2), 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/bulksavedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -193,6 +220,10 @@ ipcMain.handle("draw-decrease-size", () => {
 ipcMain.handle("get-info", (event: any, image: string) => {
   window?.webContents.send("close-all-dialogs", "info")
   window?.webContents.send("show-info-dialog", image)
+})
+
+ipcMain.handle("parse-pixiv-link", async (event, link: string) => {
+  return mainFunctions.parsePixivLink(link)
 })
 
 ipcMain.handle("get-width-height", async (event, image: any) => {
@@ -246,11 +277,12 @@ ipcMain.handle("show-gif-dialog", async (event) => {
     if (currentDialog.type === "gif") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 190, height: 175, x: bounds.x + bounds.width - 190 - 170, y: bounds.y + 60, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", roundedCorners: false, webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "gifdialog.html"))
+  currentDialog = new BrowserWindow({width: 190, height: 175, x: bounds.x + bounds.width - 190 - 170, y: bounds.y + 60, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/gifdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -303,6 +335,7 @@ ipcMain.handle("clear-accept-action", (event: any) => {
 })
 
 ipcMain.handle("trigger-accept-action", (event: any, action: string) => {
+  console.log(action)
   window?.webContents.send("trigger-accept-action", action)
 })
 
@@ -420,11 +453,12 @@ ipcMain.handle("show-crop-dialog", async (event) => {
     if (currentDialog.type === "crop") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 190, height: 220, x: bounds.x + 70, y: bounds.y + 400, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "cropdialog.html"))
+  currentDialog = new BrowserWindow({width: 190, height: 220, x: bounds.x + 70, y: bounds.y + 400, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/cropdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -491,11 +525,12 @@ ipcMain.handle("show-rotate-dialog", async (event) => {
     if (currentDialog.type === "rotate") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 230, height: 170, x: bounds.x + bounds.width - 230 - 70, y: bounds.y + 60, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "rotatedialog.html"))
+  currentDialog = new BrowserWindow({width: 230, height: 170, x: bounds.x + bounds.width - 230 - 70, y: bounds.y + 60, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/rotatedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -563,11 +598,12 @@ ipcMain.handle("show-resize-dialog", async (event) => {
     if (currentDialog.type === "resize") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 230, height: 150, x: bounds.x + bounds.width - 230 - 70, y: bounds.y + 40, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "resizedialog.html"))
+  currentDialog = new BrowserWindow({width: 230, height: 150, x: bounds.x + bounds.width - 230 - 70, y: bounds.y + 40, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/resizedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -632,11 +668,12 @@ ipcMain.handle("show-binarize-dialog", async (event) => {
     if (currentDialog.type === "binarize") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 250, height: 130, x: bounds.x + 70, y: bounds.y + 450, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "binarizedialog.html"))
+  currentDialog = new BrowserWindow({width: 250, height: 130, x: bounds.x + 70, y: bounds.y + 450, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/binarizedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -709,11 +746,12 @@ ipcMain.handle("show-pixelate-dialog", async (event) => {
     if (currentDialog.type === "pixelate") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 250, height: 130, x: bounds.x + 70, y: bounds.y + 330, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "pixelatedialog.html"))
+  currentDialog = new BrowserWindow({width: 250, height: 130, x: bounds.x + 70, y: bounds.y + 330, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/pixelatedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -780,11 +818,12 @@ ipcMain.handle("show-blur-dialog", async (event) => {
     if (currentDialog.type === "blur") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 250, height: 155, x: bounds.x + 70, y: bounds.y + 190, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "blurdialog.html"))
+  currentDialog = new BrowserWindow({width: 250, height: 155, x: bounds.x + 70, y: bounds.y + 190, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/blurdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -849,11 +888,12 @@ ipcMain.handle("show-tint-dialog", async (event) => {
     if (currentDialog.type === "tint") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 180, height: 135, x: bounds.x + 70, y: bounds.y + 130, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "tintdialog.html"))
+  currentDialog = new BrowserWindow({width: 180, height: 135, x: bounds.x + 70, y: bounds.y + 130, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/tintdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -918,11 +958,12 @@ ipcMain.handle("show-hsl-dialog", async (event) => {
     if (currentDialog.type === "hsl") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 250, height: 180, x: bounds.x + 70, y: bounds.y + 50, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "hsldialog.html"))
+  currentDialog = new BrowserWindow({width: 250, height: 180, x: bounds.x + 70, y: bounds.y + 50, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/hsldialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -989,11 +1030,12 @@ ipcMain.handle("show-brightness-dialog", async (event) => {
     if (currentDialog.type === "brightness") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 250, height: 150, x: bounds.x + 70, y: bounds.y + 40, resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {nodeIntegration: true, contextIsolation: false, webSecurity: false}})
-  currentDialog.loadFile(path.join(__dirname, "brightnessdialog.html"))
+  currentDialog = new BrowserWindow({width: 250, height: 150, x: bounds.x + 70, y: bounds.y + 40, 
+    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    preload: path.join(__dirname, "../preload/index.js")}})
+  currentDialog.loadFile(path.join(__dirname, "../renderer/brightnessdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  require("@electron/remote/main").enable(currentDialog.webContents)
   currentDialog.on("ready-to-show", () => {
     currentDialog?.show()
     window?.focus()
@@ -1197,7 +1239,7 @@ ipcMain.handle("next", async (event) => {
   if (image.startsWith("data:")) return
   image = image.replace("file:///", "")
   const directory = path.dirname(image)
-  const files = await functions.getSortedFiles(directory)
+  const files = await mainFunctions.getSortedFiles(directory)
   const index = files.findIndex((f) => f === path.basename(image))
   if (index !== -1) {
     if (files[index + 1]) return `file:///${directory}/${files[index + 1]}`
@@ -1213,7 +1255,7 @@ ipcMain.handle("previous", async (event) => {
   if (image.startsWith("data:")) return
   image = image.replace("file:///", "")
   const directory = path.dirname(image)
-  const files = await functions.getSortedFiles(directory)
+  const files = await mainFunctions.getSortedFiles(directory)
   const index = files.findIndex((f) => f === path.basename(image))
   if (index !== -1) {
     if (files[index - 1]) return `file:///${directory}/${files[index - 1]}`
@@ -1249,6 +1291,18 @@ ipcMain.handle("select-file", async () => {
   return files.filePaths[0] ? files.filePaths : null
 })
 
+ipcMain.handle("select-image-files", async () => {
+  if (!window) return
+  const files = await dialog.showOpenDialog(window, {
+    filters: [
+      {name: "All Files", extensions: ["*"]}
+    ],
+    properties: ["openDirectory", "createDirectory"]
+  })
+  const directory = files.filePaths[0] ? files.filePaths[0] : null
+  return mainFunctions.getFiles(directory)
+})
+
 ipcMain.handle("get-theme", () => {
   return store.get("theme", "light")
 })
@@ -1259,37 +1313,20 @@ ipcMain.handle("save-theme", (event, theme: string) => {
   currentDialog?.webContents.send("update-theme", theme, transparency)
 })
 
-ipcMain.handle("get-transparency", () => {
-  return store.get("transparency", false)
+ipcMain.handle("get-os", () => {
+  return store.get("os", "mac")
 })
 
-ipcMain.handle("save-transparency", (event, transparency: boolean) => {
-  store.set("transparency", transparency)
-  const theme = store.get("theme", "light")
-  currentDialog?.webContents.send("update-theme", theme, transparency)
+ipcMain.handle("save-os", (event, os: string) => {
+  store.set("os", os)
 })
 
-ipcMain.handle("install-update", async (event) => {
-  if (process.platform === "darwin") {
-    const update = await autoUpdater.checkForUpdates()
-    const url = `${pack.repository.url}/releases/download/v${update.updateInfo.version}/${update.updateInfo.files[0].url}`
-    await shell.openExternal(url)
-    app.quit()
-  } else {
-    await autoUpdater.downloadUpdate()
-    autoUpdater.quitAndInstall()
-  }
+ipcMain.handle("get-transparent", () => {
+  return store.get("transparent", false)
 })
 
-ipcMain.handle("check-for-updates", async (event, startup: boolean) => {
-  window?.webContents.send("close-all-dialogs", "version")
-  const update = await autoUpdater.checkForUpdates()
-  const newVersion = update.updateInfo.version
-  if (pack.version === newVersion) {
-    if (!startup) window?.webContents.send("show-version-dialog", null)
-  } else {
-    window?.webContents.send("show-version-dialog", newVersion)
-  }
+ipcMain.handle("save-transparent", (event, transparent: boolean) => {
+  store.set("transparent", transparent)
 })
 
 ipcMain.handle("get-opened-file", () => {
@@ -1328,11 +1365,12 @@ if (!singleLock) {
 
   app.on("ready", () => {
     app.commandLine.appendSwitch('disable-features', 'DarkMode');
-    window = new BrowserWindow({width: 900, height: 650, minWidth: 520, minHeight: 250, show: false,frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", center: true, roundedCorners: false, webPreferences: {nodeIntegration: true, contextIsolation: false, enableRemoteModule: true, webSecurity: false}})
-    window.loadFile(path.join(__dirname, "index.html"))
+    window = new BrowserWindow({width: 900, height: 650, minWidth: 520, minHeight: 250, show: false, frame: false, 
+    transparent: true, hasShadow: false, backgroundColor: "#00000000", center: true, webPreferences: {
+      preload: path.join(__dirname, "../preload/index.js")}})
+    window.loadFile(path.join(__dirname, "../renderer/index.html"))
     window.removeMenu()
     openFile()
-    require("@electron/remote/main").enable(window.webContents)
     window.on("ready-to-show", () => {
       window?.show()
     })

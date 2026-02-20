@@ -1,12 +1,11 @@
-import {ipcRenderer} from "electron"
 import Draggable from "react-draggable"
-import React, {useEffect, useState, useRef, useContext} from "react"
-import {HoverContext} from "../renderer"
-import "../styles/infodialog.less"
+import React, {useEffect, useState} from "react"
+import {useActiveActions} from "../store"
 import functions from "../structures/functions"
+import "./styles/infodialog.less"
 
 const InfoDialog: React.FunctionComponent = (props) => {
-    const {setHover: setHoverCtx} = useContext(HoverContext)
+    const {setHover: setHoverCtx} = useActiveActions()
     const initialState = {
         name: null,
         width: 0,
@@ -24,7 +23,7 @@ const InfoDialog: React.FunctionComponent = (props) => {
     useEffect(() => {
         const showinfoDialog = (event: any, image: string) => {
             setVisible(() => {
-                ipcRenderer.invoke("get-metadata").then((info) => {
+                window.ipcRenderer.invoke("get-metadata").then((info) => {
                     if (info.length > 1) {
                         console.log(info)
                         console.log(image)
@@ -45,11 +44,11 @@ const InfoDialog: React.FunctionComponent = (props) => {
         const closeAllDialogs = (event: any, ignore: any) => {
             if (ignore !== "info") close()
         }
-        ipcRenderer.on("show-info-dialog", showinfoDialog)
-        ipcRenderer.on("close-all-dialogs", closeAllDialogs)
+        window.ipcRenderer.on("show-info-dialog", showinfoDialog)
+        window.ipcRenderer.on("close-all-dialogs", closeAllDialogs)
         return () => {
-            ipcRenderer.removeListener("show-info-dialog", showinfoDialog)
-            ipcRenderer.removeListener("close-all-dialogs", closeAllDialogs)
+            window.ipcRenderer.removeListener("show-info-dialog", showinfoDialog)
+            window.ipcRenderer.removeListener("close-all-dialogs", closeAllDialogs)
         }
     }, [])
 
