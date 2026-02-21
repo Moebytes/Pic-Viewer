@@ -102,7 +102,7 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
         <section className="brightness-dialog" onMouseDown={close}>
             <div className="brightness-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="brightness-container">
-                    <div className="brightness-title-container">
+                    <div className="brightness-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="brightness-title">Brightness and Contrast</p>
                     </div>
                     <div className="brightness-row-container">

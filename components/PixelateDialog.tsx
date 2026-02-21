@@ -92,7 +92,7 @@ const PixelateDialog: React.FunctionComponent = (props) => {
         <section className="pixelate-dialog" onMouseDown={close}>
             <div className="pixelate-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="pixelate-container">
-                    <div className="pixelate-title-container">
+                    <div className="pixelate-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="pixelate-title">Pixelate</p>
                     </div>
                     <div className="pixelate-row-container">

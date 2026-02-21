@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import chain from "../assets/icons/chain.png"
-import chainHover from "../assets/icons/chain-hover.png"
-import chainTop from "../assets/icons/chainTop.png"
-import chainBottom from "../assets/icons/chainBottom.png"
+import ChainIcon from "../assets/svg/chain.svg"
+import ChainTopIcon from "../assets/svg/chain-top.svg"
+import ChainBottomIcon from "../assets/svg/chain-bottom.svg"
 import "./styles/resizedialog.less"
 
 const ResizeDialog: React.FunctionComponent = () => {
@@ -163,7 +162,7 @@ const ResizeDialog: React.FunctionComponent = () => {
         <section className="resize-dialog" onMouseDown={close}>
             <div className="resize-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="resize-container">
-                    <div className="resize-title-container">
+                    <div className="resize-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="resize-title">Resize</p>
                     </div>
                     <div className="resize-row-container">
@@ -176,9 +175,9 @@ const ResizeDialog: React.FunctionComponent = () => {
                             <input className="resize-input" type="text" spellCheck="false" onChange={(event) => changeHeight(event.target.value)} value={state.height} onKeyDown={heightKey}/>
                         </div>
                         <div className="resize-chain-container">
-                            <img src={chainTop} className="resize-chain-top" style={state.link ? {opacity: 1} : {opacity: 0}}/>
-                            <img src={hoverChain ? chainHover : chain} className="resize-chain" onClick={changeLink} onMouseEnter={() => setHoverChain(true)} onMouseLeave={() => setHoverChain(false)}/>
-                            <img src={chainBottom} className="resize-chain-bottom" style={state.link ? {opacity: 1} : {opacity: 0}}/>
+                            <ChainTopIcon className="resize-chain-top" style={state.link ? {opacity: 1} : {opacity: 0}}/>
+                            <ChainIcon className="resize-chain" onClick={changeLink}/>
+                            <ChainBottomIcon className="resize-chain-bottom" style={state.link ? {opacity: 1} : {opacity: 0}}/>
                         </div>
                     </div>
                     <div className="resize-button-container">

@@ -93,7 +93,7 @@ const TintDialog: React.FunctionComponent = () => {
         <section className="tint-dialog" onMouseDown={close}>
             <div className="tint-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="tint-container">
-                    <div className="tint-title-container">
+                    <div className="tint-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="tint-title">Tint</p>
                     </div>
                     <div className="tint-row-container">

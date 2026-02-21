@@ -16,7 +16,6 @@
 }
 
 .rotate-dialog-box {
-    -webkit-app-region: drag;
     z-index: 1000;
     position: absolute;
     pointer-events: all;
@@ -25,7 +24,7 @@
     width: 230px;
     height: 170px;
     border-radius: 10px;
-    background-color: var(--title-color); // #2c99ff;
+    background-color: var(--navColor);
     padding: 10px;
     display: flex;
     flex-direction: column;
@@ -56,9 +55,9 @@
 }
 
 .rotate-title {
-    color: var(--text-color);
+    color: var(--textColor);
     font-size: 17px;
-    font-family: "Maven Pro", sans-serif;
+    font-family: "GenEi M Gothic v2", sans-serif;
     &::selection {
         background-color: #6ec5ff;
     }
@@ -84,8 +83,8 @@
 .rotate-text {
     user-select: text;
     cursor: text;
-    color: var(--text-color);
-    font-family: "Maven Pro", sans-serif;
+    color: var(--textColor);
+    font-family: "GenEi M Gothic v2", sans-serif;
     font-size: 12px;
     width: 70px;
     &::selection {
@@ -94,7 +93,6 @@
 }
 
 .rotate-slider.rc-slider {
-    -webkit-app-region: no-drag;
     width: 70%;
     border-radius: 0.2;
     align-items: center;
@@ -113,6 +111,8 @@
 }
 
 .rotate-slider > .rc-slider-handle {
+    background-color: var(--iconColor);
+    border-radius: 50%;
     margin-top: -5px;
     border: none;
     height: 1rem;
@@ -126,11 +126,6 @@
     }
 }
 
-.rotate-slider > .rc-slider-handle {
-    content: url("../../assets/icons/thumb.png");
-    background-color: black;
-}
-
 .rotate-button-container {
     display: flex;
     margin-top: 10px;
@@ -139,18 +134,17 @@
 }
 
 .reject-button {
-    -webkit-app-region: no-drag;
     border: none;
     padding-top: 0px;
     padding-bottom: 0px;
     padding-left: 5px;
     padding-right: 5px;
-    color: var(--button-text);
+    color: var(--textColor);
     text-align: center;
     font-size: 15px;
     height: 30px;
-    font-family: "Maven Pro", sans-serif;
-    background-color: var(--button-color);
+    font-family: "GenEi M Gothic v2", sans-serif;
+    background-color: var(--buttonColor);
     border: 3px solid #090409;
     &:hover {
         color: white;
@@ -160,18 +154,17 @@
 }
 
 .accept-button {
-    -webkit-app-region: no-drag;
     border: none;
     padding-top: 0px;
     padding-bottom: 0px;
     padding-left: 5px;
     padding-right: 5px;
-    color: var(--button-text);
+    color: var(--textColor);
     text-align: center;
     font-size: 15px;
     height: 30px;
-    font-family: "Maven Pro", sans-serif;
-    background-color: var(--button-color);
+    font-family: "GenEi M Gothic v2", sans-serif;
+    background-color: var(--buttonColor);
     border: 3px solid #090409;
     &:hover {
         color: white;
@@ -188,17 +181,15 @@
 }
 
 .rotate-arrow {
-    -webkit-app-region: no-drag;
     cursor: pointer;
 }
 
 .rotate-input {
-    -webkit-app-region: no-drag;
-    color: var(--text-color);
+    color: var(--textColor);
     border: none;
     margin-left: 10px;
     width: 50px;
-    font-family: "Maven Pro", sans-serif;
+    font-family: "GenEi M Gothic v2", sans-serif;
     font-size: 15px;
     background-color: transparent;
 }

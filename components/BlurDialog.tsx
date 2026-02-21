@@ -102,7 +102,7 @@ const BlurDialog: React.FunctionComponent = (props) => {
         <section className="blur-dialog" onMouseDown={close}>
             <div className="blur-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="blur-container">
-                    <div className="blur-title-container">
+                    <div className="blur-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="blur-title">Blur and Sharpen</p>
                     </div>
                     <div className="blur-row-container">

@@ -269,15 +269,6 @@ export default class Functions {
         }
     }
 
-    public static cropDrag = (on: boolean) => {
-        const photo = document.querySelector(".photo") as any
-        if (on) {
-            //photo.style["-webkit-app-region"] = "no-drag"
-        } else {
-            //photo.style["-webkit-app-region"] = "drag"
-        }
-    }
-
     public static imageDimensions = async (image: string) => {
         return new Promise<{width: number, height: number}>(async (resolve) => {
                 const img = document.createElement("img")

@@ -9,7 +9,8 @@ const lightColorList = {
 	"--navColor": "#9abaff",
 	"--iconColor": "#4a83ff",
 	"--background": "#ffffff",
-    "--textColor": "#000000"
+    "--textColor": "#000000",
+	"--buttonColor": "#7e98ff"
 }
 
 const darkColorList = {
@@ -19,7 +20,8 @@ const darkColorList = {
 	"--navColor": "#091329",
 	"--iconColor": "#4c85ff",
 	"--background": "#000000",
-    "--textColor": "#ffffff"
+    "--textColor": "#ffffff",
+	"--buttonColor": "#283d91"
 }
 
 const LocalStorage: React.FunctionComponent = () => {

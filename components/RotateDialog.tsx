@@ -2,14 +2,10 @@ import Slider from "rc-slider"
 import React, {useEffect, useState} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import downArrow from "../assets/icons/downArrow.png"
-import downArrowHover from "../assets/icons/downArrow-hover.png"
-import upArrow from "../assets/icons/upArrow.png"
-import upArrowHover from "../assets/icons/upArrow-hover.png"
-import leftArrow from "../assets/icons/leftArrow.png"
-import leftArrowHover from "../assets/icons/leftArrow-hover.png"
-import rightArrow from "../assets/icons/rightArrow.png"
-import rightArrowHover from "../assets/icons/rightArrow-hover.png"
+import DownArrowIcon from "../assets/svg/down-arrow.svg"
+import UpArrowIcon from "../assets/svg/up-arrow.svg"
+import LeftArrowIcon from "../assets/svg/left-arrow.svg"
+import RightArrowIcon from "../assets/svg/right-arrow.svg"
 import "./styles/rotatedialog.less"
 
 const RotateDialog: React.FunctionComponent = () => {
@@ -116,7 +112,7 @@ const RotateDialog: React.FunctionComponent = () => {
         <section className="rotate-dialog" onMouseDown={close}>
             <div className="rotate-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="rotate-container">
-                    <div className="rotate-title-container">
+                    <div className="rotate-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="rotate-title">Rotate</p>
                     </div>
                     <div className="rotate-row-container">
@@ -129,10 +125,10 @@ const RotateDialog: React.FunctionComponent = () => {
                         </div>
                     </div>
                     <div className="rotate-arrow-container">
-                        <img src={leftHover ? leftArrowHover : leftArrow} className="rotate-arrow" onClick={() => changeState("degrees", -90)} onMouseEnter={() => setLeftHover(true)} onMouseLeave={() => setLeftHover(false)} width={20} height={20}/>
-                        <img src={downHover ? downArrowHover : downArrow} className="rotate-arrow" onClick={() => changeState("degrees", 180)} onMouseEnter={() => setDownHover(true)} onMouseLeave={() => setDownHover(false)} width={20} height={20}/>
-                        <img src={upHover ? upArrowHover : upArrow} className="rotate-arrow" onClick={() => changeState("degrees", 0)} onMouseEnter={() => setUpHover(true)} onMouseLeave={() => setUpHover(false)} width={20} height={20}/>
-                        <img src={rightHover ? rightArrowHover : rightArrow} className="rotate-arrow" onClick={() => changeState("degrees", 90)} onMouseEnter={() => setRightHover(true)} onMouseLeave={() => setRightHover(false)} width={20} height={20}/>
+                        <LeftArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", -90)}/>
+                        <DownArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", 180)}/>
+                        <UpArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", 0)}/>
+                        <RightArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", 90)}/>
                     </div>
                     <div className="rotate-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>

@@ -157,7 +157,7 @@ const CropDialog: React.FunctionComponent = (props) => {
         <section className="crop-dialog" onMouseDown={close}>
             <div className="crop-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="crop-container">
-                    <div className="crop-title-container">
+                    <div className="crop-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="crop-title">Bulk Crop</p>
                     </div>
                     <div className="crop-row-container">

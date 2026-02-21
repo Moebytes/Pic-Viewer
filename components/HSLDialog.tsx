@@ -113,7 +113,7 @@ const HSLDialog: React.FunctionComponent = (props) => {
         <section className="hsl-dialog" onMouseDown={close}>
             <div className="hsl-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="hsl-container">
-                    <div className="hsl-title-container">
+                    <div className="hsl-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="hsl-title">HSL Adjustment</p>
                     </div>
                     <div className="hsl-row-container">

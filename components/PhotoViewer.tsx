@@ -1,49 +1,30 @@
-import React, {useEffect, useState, useRef, useContext} from "react"
+import React, {useEffect, useState, useRef} from "react"
 import {useDrawingSelector, useDrawingActions} from "../store"
 import ReactCrop from "react-image-crop"
-import path from "path"
-import brightnessButton from "../assets/icons/brightness.png"
-import brightnessButtonHover from "../assets/icons/brightness-hover.png"
-import hueButton from "../assets/icons/hue.png"
-import hueButtonHover from "../assets/icons/hue-hover.png"
-import tintButton from "../assets/icons/tint.png"
-import tintButtonHover from "../assets/icons/tint-hover.png"
-import blurButton from "../assets/icons/blur.png"
-import blurButtonHover from "../assets/icons/blur-hover.png"
-import pixelateButton from "../assets/icons/pixelate.png"
-import pixelateButtonHover from "../assets/icons/pixelate-hover.png"
-import invertButton from "../assets/icons/invert.png"
-import invertButtonHover from "../assets/icons/invert-hover.png"
-import binarizeButton from "../assets/icons/binarize.png"
-import binarizeButtonHover from "../assets/icons/binarize-hover.png"
-import cropButton from "../assets/icons/crop.png"
-import cropButtonHover from "../assets/icons/crop-hover.png"
-import resizeButton from "../assets/icons/resize.png"
-import resizeButtonHover from "../assets/icons/resize-hover.png"
-import rotateButton from "../assets/icons/rotate.png"
-import rotateButtonHover from "../assets/icons/rotate-hover.png"
-import flipXButton from "../assets/icons/flipx.png"
-import flipXButtonHover from "../assets/icons/flipx-hover.png"
-import flipYButton from "../assets/icons/flipy.png"
-import flipYButtonHover from "../assets/icons/flipy-hover.png"
-import undoButton from "../assets/icons/undo.png"
-import undoButtonHover from "../assets/icons/undo-hover.png"
-import redoButton from "../assets/icons/redo.png"
-import redoButtonHover from "../assets/icons/redo-hover.png"
-import saveButton from "../assets/icons/save.png"
-import saveButtonHover from "../assets/icons/save-hover.png"
-import resetButton from "../assets/icons/reset.png"
-import resetButtonHover from "../assets/icons/reset-hover.png"
-import previousButton from "../assets/icons/previous.png"
-import previousButtonHover from "../assets/icons/previous-hover.png"
-import nextButton from "../assets/icons/next.png"
-import nextButtonHover from "../assets/icons/next-hover.png"
+import BrightnessIcon from "../assets/svg/brightness.svg"
+import HueIcon from "../assets/svg/hue.svg"
+import TintIcon from "../assets/svg/tint.svg"
+import BlurIcon from "../assets/svg/blur.svg"
+import PixelateIcon from "../assets/svg/pixelate.svg"
+import InvertIcon from "../assets/svg/invert.svg"
+import BinarizeIcon from "../assets/svg/binarize.svg"
+import CropIcon from "../assets/svg/crop.svg"
+import ResizeIcon from "../assets/svg/resize.svg"
+import RotateIcon from "../assets/svg/rotate.svg"
+import FlipXIcon from "../assets/svg/flipx.svg"
+import FlipYIcon from "../assets/svg/flipy.svg"
+import UndoIcon from "../assets/svg/undo.svg"
+import RedoIcon from "../assets/svg/redo.svg"
+import SaveIcon from "../assets/svg/save.svg"
+import ResetIcon from "../assets/svg/reset.svg"
+import PreviousIcon from "../assets/svg/previous.svg"
+import NextIcon from "../assets/svg/next.svg"
 import functions from "../structures/functions"
 import CanvasDraw from "../structures/CanvasDraw"
 import {TransformWrapper, TransformComponent} from "react-zoom-pan-pinch"
 import BulkContainer from "./BulkContainer"
 import {useDropzone} from "react-dropzone"
-import "react-image-crop/dist/ReactCrop.css"
+import path from "path"
 import "./styles/photoviewer.less"
 
 const imageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".avif", ".tiff", ".gif"]
@@ -325,7 +306,6 @@ const PhotoViewer: React.FunctionComponent = () => {
                 const selection = document.querySelector(".ReactCrop__crop-selection") as HTMLDivElement
                 if (selection?.style.opacity === "1") {
                     setCropEnabled(false)
-                    functions.cropDrag(false)
                 }
                 document.documentElement.style.setProperty("cursor", "grab", "important")
             }
@@ -335,7 +315,6 @@ const PhotoViewer: React.FunctionComponent = () => {
                     const selection = document.querySelector(".ReactCrop__crop-selection") as HTMLDivElement
                     if (selection?.style.opacity === "1") {
                         setCropEnabled(true)
-                        functions.cropDrag(true)
                     }
                     document.documentElement.style.setProperty("cursor", "default")
                     setRotateEnabled(false)
@@ -343,7 +322,6 @@ const PhotoViewer: React.FunctionComponent = () => {
                     const selection = document.querySelector(".ReactCrop__crop-selection") as HTMLDivElement
                     if (selection?.style.opacity === "1") {
                         setCropEnabled(false)
-                        functions.cropDrag(false)
                     }
                     document.documentElement.style.setProperty("cursor", "row-resize", "important")
                     setRotateEnabled(true)
@@ -362,7 +340,6 @@ const PhotoViewer: React.FunctionComponent = () => {
                 const selection = document.querySelector(".ReactCrop__crop-selection") as HTMLDivElement
                 if (selection?.style.opacity === "1") {
                     setCropEnabled(true)
-                    functions.cropDrag(true)
                 }
                 document.documentElement.style.setProperty("cursor", "default")
             }
@@ -391,7 +368,6 @@ const PhotoViewer: React.FunctionComponent = () => {
             const selection = document.querySelector(".ReactCrop__crop-selection") as HTMLDivElement
             if (selection?.style.opacity === "1") {
                 setCropEnabled(true)
-                functions.cropDrag(true)
             }
             document.documentElement.style.setProperty("cursor", "default")
             setRotateEnabled(false)
@@ -533,13 +509,11 @@ const PhotoViewer: React.FunctionComponent = () => {
                     return {...prev, x: 0, y: 0, width: 100, height: 100}
                 })
                 setCropEnabled(true)
-                functions.cropDrag(true)
                 window.ipcRenderer.invoke("trigger-accept-action", "crop")
             } else {
                 const selection = document.querySelector(".ReactCrop__crop-selection") as HTMLDivElement
                 selection.style.opacity = "0"
                 setCropEnabled(false)
-                functions.cropDrag(false)
                 window.ipcRenderer.invoke("clear-accept-action")
             }
         }
@@ -744,26 +718,26 @@ const PhotoViewer: React.FunctionComponent = () => {
     return (
         <main className="photo-viewer" {...getRootProps()}>
             <div className={hover && !drawing ? "left-adjustment-bar visible" : "left-adjustment-bar"} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <img className="adjustment-img" src={brightnessHover ? brightnessButtonHover : brightnessButton} onClick={() => brightness()} width={30} height={30} onMouseEnter={() => setBrightnessHover(true)} onMouseLeave={() => setBrightnessHover(false)}/>
-                <img className="adjustment-img" src={hueHover ? hueButtonHover : hueButton} onClick={() => hue()} width={30} height={30} onMouseEnter={() => setHueHover(true)} onMouseLeave={() => setHueHover(false)}/>
-                <img className="adjustment-img" src={tintHover ? tintButtonHover : tintButton} onClick={() => tint()} width={30} height={30} onMouseEnter={() => setTintHover(true)} onMouseLeave={() => setTintHover(false)}/>
-                <img className="adjustment-img" src={blurHover ? blurButtonHover : blurButton} onClick={() => blur()} width={30} height={30} onMouseEnter={() => setBlurHover(true)} onMouseLeave={() => setBlurHover(false)}/>
-                <img className="adjustment-img" src={previousHover ? previousButtonHover : previousButton} onClick={() => previous()} width={30} height={30} onMouseEnter={() => setPreviousHover(true)} onMouseLeave={() => setPreviousHover(false)}/>
-                <img className="adjustment-img" src={pixelateHover ? pixelateButtonHover : pixelateButton} onClick={() => pixelate()} width={30} height={30} onMouseEnter={() => setPixelateHover(true)} onMouseLeave={() => setPixelateHover(false)}/>
-                <img className="adjustment-img" src={invertHover ? invertButtonHover : invertButton} onClick={() => invert()} width={30} height={30} onMouseEnter={() => setInvertHover(true)} onMouseLeave={() => setInvertHover(false)}/>
-                <img className="adjustment-img" src={binarizeHover ? binarizeButtonHover : binarizeButton} onClick={() => binarize()} width={30} height={30} onMouseEnter={() => setBinarizeHover(true)} onMouseLeave={() => setBinarizeHover(false)}/>
-                <img className="adjustment-img" src={cropHover ? cropButtonHover : cropButton} onClick={() => toggleCrop()} width={30} height={30} onMouseEnter={() => setCropHover(true)} onMouseLeave={() => setCropHover(false)}/>
+                <BrightnessIcon className="adjustment-img" onClick={() => brightness()}/>
+                <HueIcon className="adjustment-img" onClick={() => hue()}/>
+                <TintIcon className="adjustment-img" onClick={() => tint()}/>
+                <BlurIcon className="adjustment-img" onClick={() => blur()}/>
+                <PreviousIcon className="adjustment-img" onClick={() => previous()}/>
+                <PixelateIcon className="adjustment-img" onClick={() => pixelate()}/>
+                <InvertIcon className="adjustment-img" onClick={() => invert()}/>
+                <BinarizeIcon className="adjustment-img" onClick={() => binarize()}/>
+                <CropIcon className="adjustment-img" onClick={() => toggleCrop()}/>
             </div>
             <div className={hover && !drawing ? "right-adjustment-bar visible" : "right-adjustment-bar"} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <img className="adjustment-img" src={resizeHover ? resizeButtonHover : resizeButton} onClick={() => resize()} width={30} height={30} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}/>
-                <img className="adjustment-img" src={rotateHover ? rotateButtonHover : rotateButton} onClick={() => rotate()} width={30} height={30} onMouseEnter={() => setRotateHover(true)} onMouseLeave={() => setRotateHover(false)}/>
-                <img className="adjustment-img" src={flipXHover ? flipXButtonHover : flipXButton} onClick={() => flipX()} width={30} height={30} onMouseEnter={() => setFlipXHover(true)} onMouseLeave={() => setFlipXHover(false)}/>
-                <img className="adjustment-img" src={flipYHover ? flipYButtonHover : flipYButton} onClick={() => flipY()} width={30} height={30} onMouseEnter={() => setFlipYHover(true)} onMouseLeave={() => setFlipYHover(false)}/>
-                <img className="adjustment-img" src={nextHover ? nextButtonHover : nextButton} onClick={() => next()} width={30} height={30} onMouseEnter={() => setNextHover(true)} onMouseLeave={() => setNextHover(false)}/>
-                <img className="adjustment-img" src={undoHover ? undoButtonHover : undoButton} onClick={() => undo()} width={30} height={30} onMouseEnter={() => setUndoHover(true)} onMouseLeave={() => setUndoHover(false)}/>
-                <img className="adjustment-img" src={redoHover ? redoButtonHover : redoButton} onClick={() => redo()} width={30} height={30} onMouseEnter={() => setRedoHover(true)} onMouseLeave={() => setRedoHover(false)}/>
-                <img className="adjustment-img" src={saveHover ? saveButtonHover : saveButton} onClick={() => save()} width={30} height={30} onMouseEnter={() => setSaveHover(true)} onMouseLeave={() => setSaveHover(false)}/>
-                <img className="adjustment-img" src={resetHover ? resetButtonHover : resetButton} onClick={() => reset()} width={30} height={30} onMouseEnter={() => setResetHover(true)} onMouseLeave={() => setResetHover(false)}/>
+                <ResizeIcon className="adjustment-img" onClick={() => resize()}/>
+                <RotateIcon className="adjustment-img" onClick={() => rotate()}/>
+                <FlipXIcon className="adjustment-img" onClick={() => flipX()}/>
+                <FlipYIcon className="adjustment-img" onClick={() => flipY()}/>
+                <NextIcon className="adjustment-img" onClick={() => next()}/>
+                <UndoIcon className="adjustment-img" onClick={() => undo()}/>
+                <RedoIcon className="adjustment-img" onClick={() => redo()}/>
+                <SaveIcon className="adjustment-img" onClick={() => save()}/>
+                <ResetIcon className="adjustment-img" onClick={() => reset()}/>
             </div>
             <TransformWrapper ref={zoomRef} minScale={0.5} limitToBounds={false} minPositionX={-200} maxPositionX={200} minPositionY={-200} maxPositionY={200} onZoom={(ref) => setZoomScale(ref.state.scale)}
             onZoomStop={(ref) => setZoomScale(ref.state.scale)} panning={{allowLeftClickPan: !drawing, allowRightClickPan: false}} wheel={{step: 0.1}} pinch={{disabled: true}} zoomAnimation={{size: 0}} 
@@ -771,7 +745,7 @@ const PhotoViewer: React.FunctionComponent = () => {
                 <TransformComponent>
                     <div className="rotate-photo-container" style={{transform: `rotate(${rotateDegrees}deg)`}}>
                         {bulk ? <BulkContainer files={bulkFiles}/> :
-                        <div className="photo-container">
+                        <div className="photo-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                             {drawing ? <CanvasDraw ref={drawRef} className="draw-img" lazyRadius={0} brushRadius={brushSize} brushColor={brushColor} 
                             catenaryColor="rgba(0, 0, 0, 0)" hideGrid={true} canvasWidth={width} canvasHeight={height} imgSrc={image} erase={erasing} 
                             loadTimeOffset={0} eraseColor="#000000" zoom={zoomScale} style={{transform: `rotate(${-rotateDegrees}deg)`}}/> :

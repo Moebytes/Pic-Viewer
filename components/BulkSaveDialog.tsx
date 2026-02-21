@@ -72,7 +72,7 @@ const BulkSaveDialog: React.FunctionComponent = (props) => {
             <Draggable handle=".bulk-save-title-container">
             <div className="bulk-save-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="bulk-save-container">
-                    <div className="bulk-save-title-container">
+                    <div className="bulk-save-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="bulk-save-title">Bulk Save</p>
                     </div>
                     <div className="bulk-save-row-container">

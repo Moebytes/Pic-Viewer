@@ -64,7 +64,7 @@ const InfoDialog: React.FunctionComponent = (props) => {
             <section className="info-dialog" onMouseDown={close} onMouseEnter={() => setHoverCtx(false)} onMouseLeave={() => setHoverCtx(true)}>
                 <Draggable>
                 <div className="info-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                    <div className="info-container">
+                    <div className="info-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <div className="info-title-container">
                             <p className="info-title">Image Info</p>
                         </div>

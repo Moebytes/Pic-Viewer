@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import checkbox from "../assets/icons/checkbox.png"
-import checkboxChecked from "../assets/icons/checkbox-checked.png"
+import CheckboxIcon from "../assets/svg/checkbox.svg"
+import CheckboxCheckedIcon from "../assets/svg/checkbox-checked.svg"
 import "./styles/gifdialog.less"
 
 const GIFDialog: React.FunctionComponent = (props) => {
@@ -144,7 +144,7 @@ const GIFDialog: React.FunctionComponent = (props) => {
         <section className="gif-dialog" onMouseDown={close}>
             <div className="gif-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="gif-container">
-                    <div className="gif-title-container">
+                    <div className="gif-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="gif-title">GIF Options</p>
                     </div>
                     <div className="gif-row-container">
@@ -155,13 +155,17 @@ const GIFDialog: React.FunctionComponent = (props) => {
                         <div className="gif-row">
                             <p className="gif-text">Reverse: </p>
                             <div className="gif-checkbox-container">
-                                <img className="gif-checkbox" src={state.reverse ? checkboxChecked : checkbox} width={12} height={12} onClick={() => changeState("reverse", !state.reverse)}/>
+                                {state.reverse ?
+                                <CheckboxCheckedIcon className="gif-checkbox" onClick={() => changeState("reverse", !state.reverse)}/> : 
+                                <CheckboxIcon className="gif-checkbox" onClick={() => changeState("reverse", !state.reverse)}/>}
                             </div>
                         </div>
                         <div className="gif-row">
                             <p className="gif-text">Transparency: </p>
                             <div className="gif-checkbox-container">
-                                <img className="gif-checkbox" src={state.transparency ? checkboxChecked : checkbox} width={12} height={12} onClick={() => changeState("transparency", !state.transparency)}/>
+                                {state.transparency ?
+                                <CheckboxCheckedIcon className="gif-checkbox" onClick={() => changeState("transparency", !state.transparency)}/> : 
+                                <CheckboxIcon className="gif-checkbox" onClick={() => changeState("transparency", !state.transparency)}/>}
                             </div>
                         </div>
                         <div className="gif-row">

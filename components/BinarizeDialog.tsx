@@ -93,7 +93,7 @@ const BinarizeDialog: React.FunctionComponent = () => {
         <section className="binarize-dialog" onMouseDown={close}>
             <div className="binarize-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="binarize-container">
-                    <div className="binarize-title-container">
+                    <div className="binarize-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="binarize-title">Binarize</p>
                     </div>
                     <div className="binarize-row-container">
