@@ -1,12 +1,13 @@
-import {app, BrowserWindow, dialog, globalShortcut, ipcMain, session, shell} from "electron"
+import {app, BrowserWindow, Menu, MenuItemConstructorOptions, dialog, ipcMain, session, 
+screen, clipboard, nativeImage, shell} from "electron"
 import Store from "electron-store"
-import * as localShortcut from "electron-shortcuts"
 import dragAddon from "electron-click-drag-plugin"
 import path from "path"
 import process from "process"
 import functions from "./structures/functions"
 import mainFunctions from "./structures/mainFunctions"
 import sharp from "sharp"
+import pack from "./package.json"
 import fs from "fs"
 
 process.setMaxListeners(0)
@@ -22,8 +23,6 @@ let originalName = null as any
 let originalLink = null as any
 let historyStates = [] as string[]
 let historyIndex = -1
-
-ipcMain.handle("debug", console.log)
 
 ipcMain.handle("close", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender)
@@ -54,6 +53,32 @@ ipcMain.on("moveWindow", (event) => {
   dragAddon.startDrag(windowID)
 })
 
+ipcMain.handle("clipboard:readText", (event) => {
+  return clipboard.readText()
+})
+
+ipcMain.handle("clipboard:writeText", (event, text: string) => {
+  clipboard.writeText(text)
+})
+
+ipcMain.handle("clipboard:clear", (event) => {
+  clipboard.clear()
+})
+
+ipcMain.handle("clipboard:readImage", (event) => {
+  const img = clipboard.readImage()
+  if (img.isEmpty()) return ""
+  return functions.bufferToBase64(img.toPNG(), "png")
+})
+
+ipcMain.handle("clipboard:writeImage", (event, image: string) => {
+  if (image.startsWith("data:")) {
+      clipboard.writeImage(nativeImage.createFromBuffer(functions.base64ToBuffer(image)))
+  } else {
+      clipboard.writeImage(nativeImage.createFromPath(image.replace("file:///", "")))
+  }
+})
+
 const updateHistoryState = (state: any) => {
   historyIndex++
   historyStates.splice(historyIndex, Infinity, state)
@@ -76,10 +101,6 @@ const saveImage = async (image: any, savePath: string) => {
     sharp(image).toFile(savePath)
   }
 }
-
-ipcMain.handle("clear-temp", (event, key: string) => {
-  tempStore = {}
-})
 
 ipcMain.handle("get-temp", (event, key: string) => {
   return tempStore[key]
@@ -218,11 +239,6 @@ ipcMain.handle("draw-decrease-size", () => {
   window?.webContents.send("draw-decrease-size")
 })
 
-ipcMain.handle("get-info", (event: any, image: string) => {
-  window?.webContents.send("close-all-dialogs", "info")
-  window?.webContents.send("show-info-dialog", image)
-})
-
 ipcMain.handle("parse-pixiv-link", async (event, link: string) => {
   return mainFunctions.parsePixivLink(link)
 })
@@ -336,7 +352,6 @@ ipcMain.handle("clear-accept-action", (event: any) => {
 })
 
 ipcMain.handle("trigger-accept-action", (event: any, action: string) => {
-  console.log(action)
   window?.webContents.send("trigger-accept-action", action)
 })
 
@@ -1207,22 +1222,6 @@ ipcMain.handle("save-dialog", async (event, defaultPath: string) => {
   return save.filePath ? save.filePath : null
 })
 
-ipcMain.handle("save-img", async (event) => {
-  window?.webContents.send("save-img")
-})
-
-ipcMain.handle("copy-address", async (event, image: any) => {
-  window?.webContents.send("copy-address", image)
-})
-
-ipcMain.handle("trigger-paste", async (event) => {
-    window?.webContents.send("trigger-paste")
-})
-
-ipcMain.handle("copy-image", async (event, image: any) => {
-  window?.webContents.send("copy-image", image)
-})
-
 ipcMain.handle("open-link", async (event, link: string) => {
   window?.webContents.send("open-link", link)
 })
@@ -1351,6 +1350,130 @@ app.on("open-file", (event, file) => {
   window?.webContents.send("open-file", file)
 })
 
+ipcMain.handle("context-menu", (event, {x, y}) => {
+  const template: MenuItemConstructorOptions[] = [
+    {label: "Copy", accelerator: "CmdOrCtrl+C", click: () => event.sender.send("copy-image", {x, y})},
+    {label: "Paste", accelerator: "CmdOrCtrl+V", click: () => event.sender.send("trigger-paste")},
+    {type: "separator"},
+    {label: "Get Info", click: () => {
+      event.sender.send("close-all-dialogs", "info")
+      event.sender.send("show-info-dialog", {x, y})
+    }},
+    {type: "separator"},
+    {label: "Save Image", click: () => event.sender.send("save-img")},
+    {label: "Copy Address", click: () => event.sender.send("copy-address", {x, y})},
+    {label: "Clear Cache", click: () => {
+      tempStore = {}
+    }}
+  ]
+
+  const menu = Menu.buildFromTemplate(template)
+  const window = BrowserWindow.fromWebContents(event.sender)
+  if (window) menu.popup({window})
+})
+
+const applicationMenu = () =>  {
+  const template: MenuItemConstructorOptions[] = [
+    {role: "appMenu"},
+    {
+      label: "File",
+      submenu: [
+        {
+          label: "Open", 
+          accelerator: "CmdOrCtrl+O",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win.webContents.send("upload-file")
+          }
+        },
+        {
+          label: "Save",
+          accelerator: "CmdOrCtrl+S",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win?.webContents.send("save-img")
+          }
+        }
+      ]
+    },
+    {
+      label: "Edit",
+      submenu: [
+        {
+          label: "Copy", 
+          accelerator: "CmdOrCtrl+C",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            const cursor = screen.getCursorScreenPoint()
+            const [winX, winY] = win.getPosition()
+            const x = cursor.x - winX
+            const y = cursor.y - winY
+            win.webContents.send("copy-image", {x, y})
+          }
+        },
+        {
+          label: "Paste",
+          accelerator: "CmdOrCtrl+V",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win?.webContents.send("trigger-paste")
+          }
+        },
+        {type: "separator"},
+        {
+          label: "Undo", 
+          accelerator: "CmdOrCtrl+Z",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win.webContents.send("trigger-undo")
+          }
+        },
+        {
+          label: "Redo",
+          accelerator: "CmdOrCtrl+Shift+Z",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win?.webContents.send("trigger-redo")
+          }
+        }
+      ]
+    },
+    {
+      label: "View",
+      submenu: [
+        {
+          label: "Zoom In", 
+          accelerator: "CmdOrCtrl+=",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win.webContents.send("zoom-in")
+          }
+        },
+        {
+          label: "Zoom Out",
+          accelerator: "CmdOrCtrl+-",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win?.webContents.send("zoom-out")
+          }
+        }
+      ]
+    },
+    {role: "windowMenu"},
+    {
+      role: "help",
+      submenu: [
+        {role: "reload"},
+        {role: "forceReload"},
+        {role: "toggleDevTools"},
+        {type: "separator"},
+        {label: "Online Support", click: () => shell.openExternal(pack.repository.url)}
+      ]
+    }
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
 const singleLock = app.requestSingleInstanceLock()
 
 if (!singleLock) {
@@ -1365,12 +1488,12 @@ if (!singleLock) {
   })
 
   app.on("ready", () => {
-    app.commandLine.appendSwitch('disable-features', 'DarkMode');
     window = new BrowserWindow({width: 900, height: 650, minWidth: 520, minHeight: 250, show: false, frame: false, 
     transparent: true, hasShadow: false, backgroundColor: "#00000000", center: true, webPreferences: {
       preload: path.join(__dirname, "../preload/index.js")}})
     window.loadFile(path.join(__dirname, "../renderer/index.html"))
     window.removeMenu()
+    applicationMenu()
     openFile()
     window.on("ready-to-show", () => {
       window?.show()
@@ -1379,66 +1502,10 @@ if (!singleLock) {
       if (currentDialog) currentDialog.close()
       window = null
     })
-    if (process.platform === "darwin") {
-      localShortcut.register("Cmd+Shift+Z", () => {
-        window?.webContents.send("trigger-redo")
-      }, window, {strict: true})
-      localShortcut.register("Cmd+Z", () => {
-        window?.webContents.send("trigger-undo")
-      }, window, {strict: true})
-      localShortcut.register("Cmd+V", () => {
-        window?.webContents.send("trigger-paste")
-      }, window, {strict: true})
-      localShortcut.register("Cmd+S", () => {
-        window?.webContents.send("save-img")
-      }, window, {strict: true})
-      localShortcut.register("Cmd+O", () => {
-        window?.webContents.send("upload-file")
-      }, window, {strict: true})
-      localShortcut.register("Cmd+=", () => {
-        window?.webContents.send("zoom-in")
-      }, window, {strict: true})
-      localShortcut.register("Cmd+-", () => {
-        window?.webContents.send("zoom-out")
-      }, window, {strict: true})
-      if (process.env.DEVELOPMENT === "true") {
-        globalShortcut.register("Cmd+Shift+I", () => {
-          window?.webContents.toggleDevTools()
-        })
-      }
-    }
-    localShortcut.register("Ctrl+Shift+Z", () => {
-      window?.webContents.send("trigger-redo")
-    }, window, {strict: true})
-    localShortcut.register("Ctrl+Z", () => {
-      window?.webContents.send("trigger-undo")
-    }, window, {strict: true})
-    localShortcut.register("Ctrl+V", () => {
-      window?.webContents.send("trigger-paste")
-    }, window, {strict: true})
-    localShortcut.register("Ctrl+S", () => {
-      window?.webContents.send("save-img")
-    }, window, {strict: true})
-    localShortcut.register("Ctrl+O", () => {
-      window?.webContents.send("upload-file")
-    }, window, {strict: true})
-    localShortcut.register("Ctrl+=", () => {
-      window?.webContents.send("zoom-in")
-    }, window, {strict: true})
-    localShortcut.register("Ctrl+-", () => {
-      window?.webContents.send("zoom-out")
-    }, window, {strict: true})
-    if (process.env.DEVELOPMENT === "true") {
-      globalShortcut.register("Control+Shift+I", () => {
-        window?.webContents.toggleDevTools()
-      })
-    }
-    session.defaultSession.webRequest.onBeforeSendHeaders({urls: ["https://*.pixiv.net/*", "https://*.pximg.net/*"]}, (details, callback) => {
+    session.defaultSession.webRequest.onBeforeSendHeaders({urls: 
+      ["https://*.pixiv.net/*", "https://*.pximg.net/*"]}, (details, callback) => {
       details.requestHeaders["Referer"] = "https://www.pixiv.net/"
       callback({requestHeaders: details.requestHeaders})
     })
   })
 }
-
-app.allowRendererProcessReuse = false
-app.commandLine.appendSwitch("no-sandbox")

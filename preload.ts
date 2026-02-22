@@ -1,8 +1,17 @@
 import {contextBridge, ipcRenderer, clipboard, app, nativeImage, IpcRendererEvent} from "electron"
 
-type SystemPath = "home" | "appData" | "userData" | "cache" | "temp" | "exe" | "module" 
+const base64ToBuffer = (base64: string) => {
+    const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)!
+    return Buffer.from(matches[2], "base64")
+}
+
+const bufferToBase64 = (buffer: Buffer, type: string) => {
+    return `data:${type};base64,${buffer.toString("base64")}`
+}
+
+type SystemPath = "home" | "appData" | "userData" | "temp" | "exe" | "module" 
   | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos" | "recent" 
-  | "logs" | "pepperFlashSystemPlugin" | "crashDumps"
+  | "logs" | "crashDumps"
 
 declare global {
   interface Window {
@@ -14,16 +23,12 @@ declare global {
       removeListener: (channel: string, listener: (...args: any[]) => void) => void
     },
     clipboard: {
-      readText: () => string
-      writeText: (text: string) => void
-      clear: () => void
-      readImage: () => Electron.NativeImage
-      writeImage: (image: Electron.NativeImage) => void
+      readText: () => Promise<string>
+      writeText: (text: string) => Promise<void>
+      clear: () => Promise<void>
+      readImage: () => Promise<string>
+      writeImage: (image: string) => Promise<void>
     },
-    nativeImage: {
-      createFromBuffer: (buffer: Buffer) => Electron.NativeImage
-      createFromPath: (path: string) => Electron.NativeImage
-    }
     app: {
       getPath: (location: SystemPath) => string
     }
@@ -50,18 +55,12 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 })
 
 contextBridge.exposeInMainWorld("clipboard", {
-    readText: () => clipboard.readText(),
-    writeText: (text: string) => clipboard.writeText(text),
-    clear: () => clipboard.clear(),
-    readImage: () => clipboard.readImage(),
-    writeImage: (image: Electron.NativeImage) => clipboard.writeImage(image)
+    readText: () => ipcRenderer.invoke("clipboard:readText"),
+    writeText: (text: string) => ipcRenderer.invoke("clipboard:writeText", text),
+    clear: () => ipcRenderer.invoke("clipboard:clear"),
+    readImage: () => ipcRenderer.invoke("clipboard:readImage"),
+    writeImage: (image: string) => ipcRenderer.invoke("clipboard:writeImage", image)
 })
-
-contextBridge.exposeInMainWorld("nativeImage", {
-    createFromBuffer: (buffer: Buffer) => nativeImage.createFromBuffer(buffer),
-    createFromPath: (path: string) => nativeImage.createFromPath(path),
-})
-
 
 contextBridge.exposeInMainWorld("app", {
     getPath: (location: SystemPath) => app.getPath(location)

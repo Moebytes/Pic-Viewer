@@ -13,8 +13,8 @@ const LinkDialog: React.FunctionComponent = (props) => {
         const closeAllDialogs = (event: any, ignore: any) => {
             if (ignore !== "link") setVisible(false)
         }
-        const triggerPaste = () => {
-            const text = window.clipboard.readText()
+        const triggerPaste = async () => {
+            const text = await window.clipboard.readText()
             if (text) {
                 searchBox.current!.value += text
             }

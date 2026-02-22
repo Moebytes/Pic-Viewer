@@ -146,7 +146,6 @@
     "bootstrap": "^5.3.8",
     "catenary-curve": "^1.0.1",
     "electron-click-drag-plugin": "^2.0.2",
-    "electron-shortcuts": "^0.4.0",
     "electron-store": "^8.0.0",
     "gif-encoder": "^0.7.2",
     "gif-frames": "github:Moestash/gif-frames#no-cumulative",

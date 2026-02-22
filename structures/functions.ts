@@ -187,12 +187,15 @@ export default class Functions {
         return Functions.bufferToBase64(Functions.arrayBufferToBuffer(arrayBuffer), "png")
     }
 
-    public static imageAtCursor = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    public static imageAtCursor = (coords: {x: number, y: number}) => {
         const images = document.querySelectorAll(".bulk-img") as NodeListOf<HTMLImageElement>
         let found = null as any
         images.forEach((i) => {
             const rect = i.getBoundingClientRect()
-            if (event.pageX > rect.left && event.pageX < rect.right && event.pageY > rect.top && event.pageY < rect.bottom) {
+            if (coords.x > rect.left && 
+                coords.x < rect.right && 
+                coords.y > rect.top && 
+                coords.y < rect.bottom) {
                 found = i
             }
         })

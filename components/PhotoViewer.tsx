@@ -102,10 +102,8 @@ const PhotoViewer: React.FunctionComponent = () => {
                 setBulkFiles(null)
             }
         }
-        const triggerPaste = () => {
-            const img = window.clipboard.readImage()
-            if (img.isEmpty()) return
-            const base64 = functions.bufferToBase64(img.toPNG(), "png")
+        const triggerPaste = async () => {
+            const base64 = await window.clipboard.readImage()
             setImage(base64)
             window.ipcRenderer.invoke("update-original-images", base64)
             window.ipcRenderer.invoke("set-original-name", null)
@@ -217,33 +215,32 @@ const PhotoViewer: React.FunctionComponent = () => {
             setHeight(height)
         }
         updateDimensions()
-        const copyImage = (event: any, img: any) => {
-            if (bulk) {
-                if (!img) return
-                if (img.startsWith("data:")) {
-                    window.clipboard.writeImage(window.nativeImage.createFromBuffer(functions.base64ToBuffer(img)))
-                } else {
-                    window.clipboard.writeImage(window.nativeImage.createFromPath(img.replace("file:///", "")))
-                }
+        const copyImage = async (event: any, coords: {x: number, y: number}) => {
+            const selectedText = window.getSelection()?.toString().trim()
+            if (selectedText) {
+                await window.clipboard.writeText(selectedText)
             } else {
-                if (image.startsWith("data:")) {
-                    window.clipboard.writeImage(window.nativeImage.createFromBuffer(functions.base64ToBuffer(image)))
+                if (bulk) {
+                    const img = functions.imageAtCursor(coords)
+                    if (!img) return
+                    await window.clipboard.writeImage(img)
                 } else {
-                    window.clipboard.writeImage(window.nativeImage.createFromPath(image.replace("file:///", "")))
+                    await window.clipboard.writeImage(image)
                 }
             }
         }
-        const copyAddress = async (event: any, img: any) => {
+        const copyAddress = async (event: any, coords: {x: number, y: number}) => {
             if (bulk) {
+                const img = functions.imageAtCursor(coords)
                 if (!img) return
-                window.clipboard.writeText(img)
+                await window.clipboard.writeText(img)
             } else {
                 const originalLink = await window.ipcRenderer.invoke("get-original-link")
                 if (originalLink) {
-                    window.clipboard.writeText(originalLink)
+                    await window.clipboard.writeText(originalLink)
                 } else {
                     const img = await window.ipcRenderer.invoke("get-original-images")
-                    window.clipboard.writeText(img[0])
+                    await window.clipboard.writeText(img[0])
                 }
             }
         }
@@ -745,12 +742,14 @@ const PhotoViewer: React.FunctionComponent = () => {
                 <TransformComponent>
                     <div className="rotate-photo-container" style={{transform: `rotate(${rotateDegrees}deg)`}}>
                         {bulk ? <BulkContainer files={bulkFiles}/> :
-                        <div className="photo-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                            {drawing ? <CanvasDraw ref={drawRef} className="draw-img" lazyRadius={0} brushRadius={brushSize} brushColor={brushColor} 
-                            catenaryColor="rgba(0, 0, 0, 0)" hideGrid={true} canvasWidth={width} canvasHeight={height} imgSrc={image} erase={erasing} 
-                            loadTimeOffset={0} eraseColor="#000000" zoom={zoomScale} style={{transform: `rotate(${-rotateDegrees}deg)`}}/> :
-                            <ReactCrop className="photo" src={image} zoom={zoomScale} spin={rotateDegrees} crop={cropState as any} 
-                            onChange={(crop: any, percentCrop: any) => setCropState(percentCrop as any)} disabled={!cropEnabled} keepSelection={true}/>}
+                        <div className="photo-container">
+                            <div className="photo-drag-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                                {drawing ? <CanvasDraw ref={drawRef} className="draw-img" lazyRadius={0} brushRadius={brushSize} brushColor={brushColor} 
+                                catenaryColor="rgba(0, 0, 0, 0)" hideGrid={true} canvasWidth={width} canvasHeight={height} imgSrc={image} erase={erasing} 
+                                loadTimeOffset={0} eraseColor="#000000" zoom={zoomScale} style={{transform: `rotate(${-rotateDegrees}deg)`}}/> :
+                                <ReactCrop className="photo" src={image} zoom={zoomScale} spin={rotateDegrees} crop={cropState as any}
+                                onChange={(crop: any, percentCrop: any) => setCropState(percentCrop as any)} disabled={!cropEnabled} keepSelection={true}/>}
+                            </div>
                         </div>}
                     </div>
                 </TransformComponent>

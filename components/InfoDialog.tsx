@@ -21,12 +21,11 @@ const InfoDialog: React.FunctionComponent = (props) => {
     const [hover, setHover] = useState(false)
 
     useEffect(() => {
-        const showinfoDialog = (event: any, image: string) => {
+        const showinfoDialog = (event: any, coords: {x: number, y: number}) => {
             setVisible(() => {
                 window.ipcRenderer.invoke("get-metadata").then((info) => {
                     if (info.length > 1) {
-                        console.log(info)
-                        console.log(image)
+                        const image = functions.imageAtCursor(coords)
                         const i = info.findIndex((i: any) => functions.pathEqual(i.image, image))
                         if (i === -1) return close()
                         setState((prev) => {
