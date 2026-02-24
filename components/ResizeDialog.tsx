@@ -4,7 +4,7 @@ import functions from "../structures/functions"
 import ChainIcon from "../assets/svg/chain.svg"
 import ChainTopIcon from "../assets/svg/chain-top.svg"
 import ChainBottomIcon from "../assets/svg/chain-bottom.svg"
-import "./styles/resizedialog.less"
+import "./styles/dialog.less"
 
 const ResizeDialog: React.FunctionComponent = () => {
     const initialState = {
@@ -33,8 +33,9 @@ const ResizeDialog: React.FunctionComponent = () => {
         })
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
         const savedValues = async () => {
@@ -42,8 +43,8 @@ const ResizeDialog: React.FunctionComponent = () => {
             if (savedResize) changeState("resize", JSON.parse(savedResize))
         }
         savedValues()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
@@ -159,20 +160,21 @@ const ResizeDialog: React.FunctionComponent = () => {
     }
 
     return (
-        <section className="resize-dialog" onMouseDown={close}>
-            <div className="resize-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="resize-container">
-                    <div className="resize-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="resize-title">Resize</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "230px", height: "150px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container" style={{gap: "2px"}}>
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">Resize</p>
                     </div>
-                    <div className="resize-row-container">
-                        <div className="resize-row">
-                            <p className="resize-text">Width{state.percent ? " %" : ""}: </p>
-                            <input className="resize-input" type="text" spellCheck="false" onChange={(event) => changeWidth(event.target.value)} value={state.width} onKeyDown={widthKey}/>
+                    <div className="dialog-row-container" style={{gap: "7px"}}>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Width{state.percent ? " %" : ""}: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeWidth(event.target.value)} value={state.width} onKeyDown={widthKey}/>
                         </div>
-                        <div className="resize-row">
-                            <p className="resize-text">Height{state.percent ? " %" : ""}: </p>
-                            <input className="resize-input" type="text" spellCheck="false" onChange={(event) => changeHeight(event.target.value)} value={state.height} onKeyDown={heightKey}/>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Height{state.percent ? " %" : ""}: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeHeight(event.target.value)} value={state.height} onKeyDown={heightKey}/>
                         </div>
                         <div className="resize-chain-container">
                             <ChainTopIcon className="resize-chain-top" style={state.link ? {opacity: 1} : {opacity: 0}}/>
@@ -180,7 +182,7 @@ const ResizeDialog: React.FunctionComponent = () => {
                             <ChainBottomIcon className="resize-chain-bottom" style={state.link ? {opacity: 1} : {opacity: 0}}/>
                         </div>
                     </div>
-                    <div className="resize-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>
                         <button onClick={() => click("accept")} className="accept-button">{"Ok"}</button>
                     </div>

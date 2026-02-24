@@ -3,6 +3,11 @@ import pixels from "image-pixels"
 import gifFrames from "gif-frames"
 import axios from "axios"
 import path from "path"
+import {lightColorList, darkColorList} from "../LocalStorage"
+
+export interface ReduxState {
+    pixelate: number
+}
 
 export default class Functions {
     public static arrayIncludes = (str: string, arr: string[]) => {
@@ -241,34 +246,16 @@ export default class Functions {
     }
 
     public static updateTheme = (theme: string, transparent?: boolean) => {
-        if (theme === "dark") {
-            let bgColor = transparent ? "#00000000" : "#090409"
-            let titleColor = transparent ? "#00000000" : "#090409"
-            document.documentElement.style.setProperty("--bg-color", bgColor)
-            document.documentElement.style.setProperty("--title-color", titleColor)
-            document.documentElement.style.setProperty("--text-color", "#3177f5")
-            document.documentElement.style.setProperty("--button-color", "#090409")
-            document.documentElement.style.setProperty("--button-text", "#4486ff")
-            document.documentElement.style.setProperty("--version-color", "#090409")
-            document.documentElement.style.setProperty("--version-text", "#3a8fff")
-            document.documentElement.style.setProperty("--version-accept", "#090409")
-            document.documentElement.style.setProperty("--version-reject", "#090409")
-            document.documentElement.style.setProperty("--version-accept-text", "#4486ff")
-            document.documentElement.style.setProperty("--version-reject-text", "#338bff")
-        } else {
-            let bgColor = transparent ? "#00000000" :  "#7294cf"
-            let titleColor = transparent ? "#00000000" : "#3177f5"
-            document.documentElement.style.setProperty("--bg-color", bgColor)
-            document.documentElement.style.setProperty("--title-color", titleColor)
-            document.documentElement.style.setProperty("--text-color", "black")
-            document.documentElement.style.setProperty("--button-color", "#4486ff")
-            document.documentElement.style.setProperty("--button-text", "black")
-            document.documentElement.style.setProperty("--version-color", "#3a8fff")
-            document.documentElement.style.setProperty("--version-text", "black")
-            document.documentElement.style.setProperty("--version-accept", "#4486ff")
-            document.documentElement.style.setProperty("--version-reject", "#338bff")
-            document.documentElement.style.setProperty("--version-accept-text", "black")
-            document.documentElement.style.setProperty("--version-reject-text", "black")
+        if (typeof window === "undefined") return
+        const selectedTheme = theme === "light" ? lightColorList : darkColorList
+
+        Object.entries(selectedTheme).forEach(([key, value]) => {
+            document.documentElement.style.setProperty(key, value)
+        })
+
+        if (transparent) {
+            document.documentElement.style.setProperty("--background", "transparent")
+            document.documentElement.style.setProperty("--navColor", "transparent")
         }
     }
 
@@ -290,5 +277,33 @@ export default class Functions {
         return new Promise<HTMLImageElement>((resolve) => {
             img.onload = () => resolve(img)
         })
+    }
+
+    public static render = (image: HTMLImageElement, container: HTMLDivElement, state: ReduxState) => {
+        if (!image || !container) return ""
+        let {pixelate} = state
+        const imageWidth = container.clientWidth
+        const imageHeight = container.clientHeight
+        const canvas = document.createElement("canvas") as HTMLCanvasElement
+        canvas.width = imageWidth
+        canvas.height = imageHeight
+        const ctx = canvas.getContext("2d")!
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+        if (pixelate !== 1) {
+            const pixelateCanvas = document.createElement("canvas")
+            const pixelateCtx = pixelateCanvas.getContext("2d")!
+
+            const pixelWidth = imageWidth / pixelate 
+            const pixelHeight = imageHeight / pixelate
+            pixelateCanvas.width = pixelWidth
+            pixelateCanvas.height = pixelHeight
+
+            pixelateCtx.drawImage(image, 0, 0, pixelWidth, pixelHeight)
+
+            ctx.imageSmoothingEnabled = false
+            ctx.drawImage(pixelateCanvas, 0, 0, canvas.width, canvas.height)
+            ctx.imageSmoothingEnabled = true
+        }
+        return canvas.toDataURL("image/png")
     }
 }

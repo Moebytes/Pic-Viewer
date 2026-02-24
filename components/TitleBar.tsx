@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react"
 import {useActiveSelector, useDrawingSelector, useDrawingActions, 
-useThemeSelector, useThemeActions} from "../store"
+useThemeSelector, useThemeActions,
+useActiveActions} from "../store"
 import CircleIcon from "../assets/svg/circle.svg"
 import CircleCloseIcon from "../assets/svg/circle-close.svg"
 import CircleMinimizeIcon from "../assets/svg/circle-minimize.svg"
@@ -22,6 +23,8 @@ import SquareIcon from "../assets/svg/square.svg"
 import CancelIcon from "../assets/svg/cancel.svg"
 import AcceptIcon from "../assets/svg/accept.svg"
 import GIFIcon from "../assets/svg/gif.svg"
+import ImageDragIcon from "../assets/svg/img-drag.svg"
+import ImagePanIcon from "../assets/svg/img-pan.svg"
 import TransparentIcon from "../assets/svg/transparent.svg"
 import LightIcon from "../assets/svg/light.svg"
 import DarkIcon from "../assets/svg/dark.svg"
@@ -30,7 +33,8 @@ import MacIcon from "../assets/svg/mac.svg"
 import "./styles/titlebar.less"
 
 const TitleBar: React.FunctionComponent = () => {
-    const {hover} = useActiveSelector()
+    const {hover, imageDrag} = useActiveSelector()
+    const {setImageDrag} = useActiveActions()
     const {drawing, erasing, brushColor} = useDrawingSelector()
     const {setErasing, setBrushColor} = useDrawingActions()
     const {theme, os, transparent} = useThemeSelector()
@@ -98,6 +102,10 @@ const TitleBar: React.FunctionComponent = () => {
         window.ipcRenderer.invoke("show-gif-dialog")
     }
 
+    const drag = () => {
+        setImageDrag(!imageDrag)
+    }
+
     const draw = () => {
         if (drawing) return setErasing(!erasing)
         window.ipcRenderer.invoke("draw")
@@ -161,6 +169,9 @@ const TitleBar: React.FunctionComponent = () => {
                     {drawing && erasing ? <EraseIcon className="title-bar-button" onClick={draw}/> : 
                     <DrawIcon className="title-bar-button" onClick={draw}/>}
                     <GIFIcon className="title-bar-button" onClick={gif}/>
+                    {imageDrag ?
+                    <ImageDragIcon className="title-bar-button" onClick={drag}/> :
+                    <ImagePanIcon className="title-bar-button" onClick={drag}/>}
                     <TransparentIcon className="title-bar-button" onClick={switchTransparency}/>
                     {theme === "light" ?
                     <LightIcon className="title-bar-button" onClick={switchTheme}/> :
@@ -201,6 +212,9 @@ const TitleBar: React.FunctionComponent = () => {
                     {drawing && erasing ? <EraseIcon className="title-bar-button" onClick={draw}/> : 
                     <DrawIcon className="title-bar-button" onClick={draw}/>}
                     <GIFIcon className="title-bar-button" onClick={gif}/>
+                    {imageDrag ?
+                    <ImageDragIcon className="title-bar-button" onClick={drag}/> :
+                    <ImagePanIcon className="title-bar-button" onClick={drag}/>}
                     <TransparentIcon className="title-bar-button" onClick={switchTransparency}/>
                     {theme === "light" ?
                     <LightIcon className="title-bar-button" onClick={switchTheme}/> :

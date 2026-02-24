@@ -6,7 +6,7 @@ import DownArrowIcon from "../assets/svg/down-arrow.svg"
 import UpArrowIcon from "../assets/svg/up-arrow.svg"
 import LeftArrowIcon from "../assets/svg/left-arrow.svg"
 import RightArrowIcon from "../assets/svg/right-arrow.svg"
-import "./styles/rotatedialog.less"
+import "./styles/dialog.less"
 
 const RotateDialog: React.FunctionComponent = () => {
     const initialState = {
@@ -22,8 +22,9 @@ const RotateDialog: React.FunctionComponent = () => {
     useEffect(() => {
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
         const savedValues = async () => {
@@ -31,8 +32,8 @@ const RotateDialog: React.FunctionComponent = () => {
             if (savedRotation) changeState("degrees", Number(savedRotation))
         }
         savedValues()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
@@ -109,19 +110,20 @@ const RotateDialog: React.FunctionComponent = () => {
     }
 
     return (
-        <section className="rotate-dialog" onMouseDown={close}>
-            <div className="rotate-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="rotate-container">
-                    <div className="rotate-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="rotate-title">Rotate</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "230px", height: "170px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container" style={{gap: "2px"}}>
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">Rotate</p>
                     </div>
-                    <div className="rotate-row-container">
-                        <div className="rotate-row">
-                            <p className="rotate-text">Degrees: </p>
-                            <input className="rotate-input" type="text" spellCheck="false" onChange={(event) => changeState("degrees", Number(event.target.value))} value={state.degrees} onKeyDown={degreeKey}/>
+                    <div className="dialog-row-container">
+                        <div className="dialog-row">
+                            <p className="dialog-text">Degrees: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("degrees", Number(event.target.value))} value={state.degrees} onKeyDown={degreeKey}/>
                         </div>
-                        <div className="rotate-row">
-                            <Slider className="rotate-slider" onChange={(value) => {changeState("degrees", value as number)}} min={-180} max={180} step={1} value={state.degrees}/>
+                        <div className="dialog-row">
+                            <Slider className="dialog-slider" onChange={(value) => {changeState("degrees", value as number)}} min={-180} max={180} step={1} value={state.degrees}/>
                         </div>
                     </div>
                     <div className="rotate-arrow-container">
@@ -130,7 +132,7 @@ const RotateDialog: React.FunctionComponent = () => {
                         <UpArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", 0)}/>
                         <RightArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", 90)}/>
                     </div>
-                    <div className="rotate-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>
                         <button onClick={() => click("accept")} className="accept-button">{"Ok"}</button>
                     </div>

@@ -2,7 +2,7 @@ import Slider from "rc-slider"
 import React, {useEffect, useState} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "./styles/brightnessdialog.less"
+import "./styles/dialog.less"
 
 const BrightnessDialog: React.FunctionComponent = (props) => {
     const initialState = {
@@ -15,8 +15,9 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
     useEffect(() => {
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
         const savedValues = async () => {
@@ -26,8 +27,8 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
             if (savedContrast) changeState("contrast", Number(savedContrast))
         }
         savedValues()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
@@ -99,23 +100,24 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
     }
 
     return (
-        <section className="brightness-dialog" onMouseDown={close}>
-            <div className="brightness-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="brightness-container">
-                    <div className="brightness-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="brightness-title">Brightness and Contrast</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "250px", height: "150px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container">
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">Brightness and Contrast</p>
                     </div>
-                    <div className="brightness-row-container">
-                        <div className="brightness-row">
-                            <p className="brightness-text">Brightness: </p>
-                            <Slider className="brightness-slider" onChange={(value) => {changeState("brightness", value as number)}} min={0.5} max={1.5} step={0.1} value={state.brightness}/>
+                    <div className="dialog-row-container">
+                        <div className="dialog-row">
+                            <p className="dialog-text">Brightness: </p>
+                            <Slider className="dialog-slider" onChange={(value) => {changeState("brightness", value as number)}} min={0.5} max={1.5} step={0.1} value={state.brightness}/>
                         </div>
-                        <div className="brightness-row">
-                            <p className="brightness-text">Contrast: </p>
-                            <Slider className="brightness-slider" onChange={(value) => {changeState("contrast", value as number)}} min={0.5} max={1.5} step={0.1} value={state.contrast}/>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Contrast: </p>
+                            <Slider className="dialog-slider" onChange={(value) => {changeState("contrast", value as number)}} min={0.5} max={1.5} step={0.1} value={state.contrast}/>
                         </div>
                     </div>
-                    <div className="brightness-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>
                         <button onClick={() => click("accept")} className="accept-button">{"Ok"}</button>
                     </div>

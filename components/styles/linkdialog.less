@@ -20,7 +20,7 @@
     width: 55%;
     height: 10%;
     border-radius: 10px;
-    background-color: #3a8fff;
+    background-color: var(--navColor);
     padding: 10px;
     display: flex;
     flex-direction: column;
@@ -37,20 +37,15 @@
 }
 
 .link-dialog-text {
-    color: black;
-    cursor: text;
-    user-select: text;
+    color: var(--textColor);;
     font-size: 20px;
     font-family: "GenEi M Gothic v2", sans-serif;
-    &::selection {
-        background-color: #7dc0ff;
-    }
 }
 
 .link-search-bar {
     display: flex;
     height: 2rem;
-    border: 0.1rem solid black;
+    border: 0.1rem solid var(--textColor);
     width: 100%;
 }
 
@@ -58,11 +53,11 @@
     width: 100%;
     font-size: 1.5rem;
     font-family: "GenEi M Gothic v2", sans-serif;
-    color: black;
+    color: var(--textColor);
     background-color: transparent;
     border: none;
     &::placeholder {
-        color: #000000;
+        color: var(--textColor);
     }
 }
 
@@ -71,12 +66,11 @@
     justify-content: center;
     align-items: center;
     border: none;
-    background-color: #226fff;
+    background-color: var(--iconColor);
     padding-left: 1rem;
     padding-right: 1rem;
 }
 
 .link-search-icon:hover {
-    cursor: pointer;
     filter: invert(1);
 }

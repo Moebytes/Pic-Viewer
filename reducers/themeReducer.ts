@@ -14,7 +14,7 @@ const themeSlice = createSlice({
     name: "theme",
     initialState: {
         theme: "light" as Themes,
-        os: window.platform as OS,
+        os: typeof window === "undefined" ? "light" : window.platform as OS,
         transparent: false
     },
     reducers: {

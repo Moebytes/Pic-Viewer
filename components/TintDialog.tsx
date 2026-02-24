@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "./styles/tintdialog.less"
+import "./styles/dialog.less"
 
 const TintDialog: React.FunctionComponent = () => {
     const initialState = {
@@ -15,8 +15,9 @@ const TintDialog: React.FunctionComponent = () => {
         setTimeout(() => {window.ipcRenderer.invoke("apply-tint", {...state, realTime: true})}, 100)
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
         const savedValues = async () => {
@@ -24,8 +25,8 @@ const TintDialog: React.FunctionComponent = () => {
             if (savedTint) changeState("tint", Number(savedTint))
         }
         savedValues()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
@@ -90,19 +91,20 @@ const TintDialog: React.FunctionComponent = () => {
     }
 
     return (
-        <section className="tint-dialog" onMouseDown={close}>
-            <div className="tint-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="tint-container">
-                    <div className="tint-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="tint-title">Tint</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "180px", height: "135px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container">
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">Tint</p>
                     </div>
-                    <div className="tint-row-container">
-                        <div className="tint-row">
-                            <p className="tint-text">Color: </p>
-                            <input onChange={(event) => changeState("tint", event.target.value)} onClick={() => setClickCounter(0)} type="color" className="tint-color-box" value={state.tint}></input>
+                    <div className="dialog-row-container">
+                        <div className="dialog-row">
+                            <p className="dialog-text">Color: </p>
+                            <input className="tint-color-box" type="color" onChange={(event) => changeState("tint", event.target.value)} onClick={() => setClickCounter(0)} value={state.tint}></input>
                         </div>
                     </div>
-                    <div className="tint-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>
                         <button onClick={() => click("accept")} className="accept-button">{"Ok"}</button>
                     </div>

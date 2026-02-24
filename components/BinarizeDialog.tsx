@@ -2,7 +2,7 @@ import Slider from "rc-slider"
 import React, {useEffect, useState} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "./styles/binarizedialog.less"
+import "./styles/dialog.less"
 
 const BinarizeDialog: React.FunctionComponent = () => {
     const initialState = {
@@ -15,8 +15,9 @@ const BinarizeDialog: React.FunctionComponent = () => {
         setTimeout(() => {window.ipcRenderer.invoke("apply-binarize", {...state, realTime: true})}, 100)
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
         const savedValues = async () => {
@@ -24,8 +25,8 @@ const BinarizeDialog: React.FunctionComponent = () => {
             if (savedBinarize) changeState("binarize", Number(savedBinarize))
         }
         savedValues()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
@@ -90,19 +91,20 @@ const BinarizeDialog: React.FunctionComponent = () => {
     }
 
     return (
-        <section className="binarize-dialog" onMouseDown={close}>
-            <div className="binarize-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="binarize-container">
-                    <div className="binarize-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="binarize-title">Binarize</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "250px", height: "130px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container">
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">Binarize</p>
                     </div>
-                    <div className="binarize-row-container">
-                        <div className="binarize-row">
-                            <p className="binarize-text">Threshold: </p>
-                            <Slider className="binarize-slider" onChange={(value) => {changeState("binarize", value as number)}} min={1} max={255} step={1} value={state.binarize}/>
+                    <div className="dialog-row-container">
+                        <div className="dialog-row">
+                            <p className="dialog-text">Threshold: </p>
+                            <Slider className="dialog-slider" onChange={(value) => {changeState("binarize", value as number)}} min={1} max={255} step={1} value={state.binarize}/>
                         </div>
                     </div>
-                    <div className="binarize-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>
                         <button onClick={() => click("accept")} className="accept-button">{"Ok"}</button>
                     </div>

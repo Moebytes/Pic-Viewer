@@ -79,6 +79,10 @@ ipcMain.handle("clipboard:writeImage", (event, image: string) => {
   }
 })
 
+ipcMain.on("sync-redux-state", (event, state: any) => {
+    window?.webContents.send("sync-redux-state", state)
+})
+
 const updateHistoryState = (state: any) => {
   historyIndex++
   historyStates.splice(historyIndex, Infinity, state)
@@ -110,17 +114,12 @@ ipcMain.handle("save-temp", (event, key: string, value: string) => {
   tempStore[key] = value
 })
 
-const getDimensions = async (image: any) => {
-  const metadata = await sharp(image).metadata()
-  return {width: metadata.width ?? 0, height: metadata.height ?? 0}
-}
-
 ipcMain.handle("close-current-dialog", () => {
   currentDialog?.close()
 })
 
 ipcMain.handle("resize-window", async (event, image: string) => {
-  const dim = await getDimensions(image)
+  const dim = await mainFunctions.getDimensions(image)
   const {width, height} = functions.constrainDimensions(dim.width, dim.height)
   // window?.setSize(width, height, true)
 })
@@ -176,12 +175,6 @@ ipcMain.handle("bulk-save-overwrite", (event: any) => {
   shell.openPath(path.dirname(originalImages[0]))
 })
 
-/*
-ipcMain.handle("show-bulk-save-dialog", (event: any) => {
-  window?.webContents.send("close-all-dialogs", "bulk-save")
-  window?.webContents.send("show-bulk-save-dialog")
-})*/
-
 ipcMain.handle("show-bulk-save-dialog", async (event) => {
   if (currentDialog) {
     currentDialog.close()
@@ -191,15 +184,11 @@ ipcMain.handle("show-bulk-save-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 230, height: 170, x: Math.floor(bounds.width/2) + 200, y: Math.floor(bounds.height/2), 
-    resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: true, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/bulksavedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -244,7 +233,7 @@ ipcMain.handle("parse-pixiv-link", async (event, link: string) => {
 })
 
 ipcMain.handle("get-width-height", async (event, image: any) => {
-  return getDimensions(image)
+  return mainFunctions.getDimensions(image)
 })
 
 ipcMain.handle("get-gif-options", () => {
@@ -283,7 +272,6 @@ ipcMain.handle("gif-effects", async (event: any, state: any) => {
   updateHistoryState(imgArray)
   window?.webContents.send("update-images", imgArray)
   store.set("gifOptions", {transparency, transparentColor})
-  
 })
 
 ipcMain.handle("show-gif-dialog", async (event) => {
@@ -300,10 +288,6 @@ ipcMain.handle("show-gif-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/gifdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -475,10 +459,6 @@ ipcMain.handle("show-crop-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/cropdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -505,6 +485,7 @@ ipcMain.handle("rotate", async (event, state: any) => {
       const newFrameArray = [] as Buffer[]
       for (let i = 0; i < frameArray.length; i++) {
         const newFrame = await sharp(frameArray[i])
+        .ensureAlpha()
         .png()
         .rotate(degrees, {background: {r: 0, b: 0, g: 0, alpha: 0}})
         .toBuffer()
@@ -515,6 +496,8 @@ ipcMain.handle("rotate", async (event, state: any) => {
       buffer = await functions.encodeGIF(newFrameArray, delayArray, newMeta.width!, newMeta.height!, {transparentColor})
     } else {
       buffer = await sharp(image, {animated: true, limitInputPixels: false})
+        .ensureAlpha()
+        .png()
         .rotate(degrees, {background: {r: 0, b: 0, g: 0, alpha: 0}})
         .toBuffer()
     }
@@ -547,10 +530,6 @@ ipcMain.handle("show-rotate-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/rotatedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -620,10 +599,6 @@ ipcMain.handle("show-resize-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/resizedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -690,64 +665,11 @@ ipcMain.handle("show-binarize-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/binarizedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
   // @ts-expect-error
   currentDialog.type = "binarize"
-})
-
-ipcMain.handle("pixelate", async (event, state: any) => {
-  const {strength, realTime} = state
-  let images = historyStates[historyIndex] as any
-  if (!images) return null
-  let imgArray = [] as any[]
-  for (let i = 0; i < images.length; i++) {
-    let image = images[i]
-    if (image.startsWith("file:///")) image = image.replace("file:///", "")
-    if (image.startsWith("http")) image = await functions.linkToBase64(image)
-    if (image.startsWith("data:")) image = functions.base64ToBuffer(image)
-    const metadata = await sharp(image).metadata()
-    let buffer = null as any
-    if (metadata.format === "gif" && process.platform === "win32") {
-      if (realTime) return null
-      const gifOptions = getGIFOptions()
-      const {frameArray, delayArray} = await functions.getGIFFrames(image)
-      const newFrameArray = [] as Buffer[]
-      for (let i = 0; i < frameArray.length; i++) {
-        const pixelWidth = Math.floor(metadata.width! / strength)
-        const pixelBuffer = await sharp(frameArray[i])
-          .resize(pixelWidth, null, {kernel: sharp.kernel.nearest})
-          .toBuffer()
-        const newFrame = await sharp(pixelBuffer)
-          .resize(metadata.width, null, {kernel: sharp.kernel.nearest})
-          .toBuffer()
-        newFrameArray.push(newFrame)
-      }
-      const transparentColor = gifOptions.transparency ? gifOptions.transparentColor : undefined
-      buffer = await functions.encodeGIF(newFrameArray, delayArray, metadata.width!, metadata.height!, {transparentColor})
-    } else {
-      const pixelWidth = Math.floor(metadata.width! / strength)
-      const pixelBuffer = await sharp(image, {animated: true, limitInputPixels: false})
-        .resize(pixelWidth, null, {kernel: sharp.kernel.nearest})
-        .toBuffer()
-      buffer = await sharp(pixelBuffer, {animated: true})
-        .resize(metadata.width, null, {kernel: sharp.kernel.nearest})
-        .toBuffer()
-    }
-    const base64 = functions.bufferToBase64(buffer, metadata.format ?? "png")
-    imgArray.push(base64)
-  }
-  if (realTime) {
-    window?.webContents.send("update-images", imgArray) 
-    return null
-  }
-  updateHistoryState(imgArray)
-  return imgArray
 })
 
 ipcMain.handle("apply-pixelate", async (event, state: any) => {
@@ -768,10 +690,6 @@ ipcMain.handle("show-pixelate-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/pixelatedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -799,7 +717,7 @@ ipcMain.handle("blur", async (event, state: any) => {
       for (let i = 0; i < frameArray.length; i++) {
         const newFrame = await sharp(frameArray[i])
           .blur(blur)
-          .sharpen(sharpen)
+          .sharpen({sigma: sharpen})
           .toBuffer()
         newFrameArray.push(newFrame)
       }
@@ -808,7 +726,7 @@ ipcMain.handle("blur", async (event, state: any) => {
     } else {
       buffer = await sharp(image, {animated: true, limitInputPixels: false})
         .blur(blur)
-        .sharpen(sharpen)
+        .sharpen({sigma: sharpen})
         .toBuffer()
     }
     const base64 = functions.bufferToBase64(buffer, metadata.format ?? "png")
@@ -840,10 +758,6 @@ ipcMain.handle("show-blur-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/blurdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -910,10 +824,6 @@ ipcMain.handle("show-tint-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/tintdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -980,10 +890,6 @@ ipcMain.handle("show-hsl-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/hsldialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -1052,10 +958,6 @@ ipcMain.handle("show-brightness-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/brightnessdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
-  currentDialog.on("ready-to-show", () => {
-    currentDialog?.show()
-    window?.focus()
-  })
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -1329,12 +1231,24 @@ ipcMain.handle("save-transparent", (event, transparent: boolean) => {
   store.set("transparent", transparent)
 })
 
+ipcMain.handle("get-img-drag", () => {
+  return store.get("img-drag", true)
+})
+
+ipcMain.handle("save-img-drag", (event, imageDrag: boolean) => {
+  store.set("img-drag", imageDrag)
+})
+
 ipcMain.handle("get-opened-file", () => {
   if (process.platform !== "darwin") {
     return process.argv[1]
   } else {
     return filePath
   }
+})
+
+ipcMain.handle("trigger-paste", (event) => {
+  window?.webContents.send("trigger-paste")
 })
 
 const openFile = (argv?: any) => {
@@ -1348,6 +1262,11 @@ app.on("open-file", (event, file) => {
   filePath = file
   event.preventDefault()
   window?.webContents.send("open-file", file)
+})
+
+ipcMain.handle("ready-to-show", () => {
+    currentDialog?.show()
+    window?.focus()
 })
 
 ipcMain.handle("context-menu", (event, {x, y}) => {
@@ -1495,7 +1414,7 @@ if (!singleLock) {
     window.removeMenu()
     applicationMenu()
     openFile()
-    window.on("ready-to-show", () => {
+    window.webContents.on("did-finish-load", () => {
       window?.show()
     })
     window.on("closed", () => {

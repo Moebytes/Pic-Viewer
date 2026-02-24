@@ -1,30 +1,28 @@
 import Slider from "rc-slider"
-import React, {useEffect, useState} from "react"
+import React, {useState, useEffect} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "./styles/pixelatedialog.less"
+import "./styles/dialog.less"
 
-const PixelateDialog: React.FunctionComponent = (props) => {
-    const initialState = {
-        strength: 1
-    }
-    const [state, setState] = useState(initialState)
+const PixelateDialog: React.FunctionComponent = () => {
+    const [pixelate, setPixelate] = useState(1)
     const [hover, setHover] = useState(false)
 
     useEffect(() => {
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
         const savedValues = async () => {
             const savedPixelate = await window.ipcRenderer.invoke("get-temp", "pixelate")
-            if (savedPixelate) changeState("strength", Number(savedPixelate))
+            if (savedPixelate) setPixelate(Number(savedPixelate))
         }
         savedValues()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
@@ -57,22 +55,14 @@ const PixelateDialog: React.FunctionComponent = (props) => {
         }
     })
 
-    const changeState = (type: string, value: number) => {
-        switch(type) {
-            case "strength":
-                setState((prev) => {
-                    return {...prev, strength: value}
-                })
-                window.ipcRenderer.invoke("apply-pixelate", {...state, strength: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "pixelate", String(value))
-                break
-        }
-    }
+    useEffect(() => {
+        window.ipcRenderer.send("sync-redux-state", {pixelate})
+        window.ipcRenderer.invoke("save-temp", "pixelate", String(pixelate))
+    }, [pixelate])
 
-    const closeAndReset = async (noRevert?: boolean) => {
-        if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
+    const closeAndReset = async () => {
+        window.ipcRenderer.send("sync-redux-state", {pixelate: 1})
         await window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
     }
     
     const close = () => {
@@ -81,27 +71,30 @@ const PixelateDialog: React.FunctionComponent = (props) => {
         }, 100)
     }
 
-    const click = (button: "accept" | "reject") => {
+    const click = async (button: "accept" | "reject") => {
         if (button === "accept") {
-            window.ipcRenderer.invoke("apply-pixelate", state)
+            window.ipcRenderer.invoke("apply-pixelate", {pixelate})
+            await functions.timeout(300)
         }
-        closeAndReset(button === "accept")
+        closeAndReset()
     }
 
     return (
-        <section className="pixelate-dialog" onMouseDown={close}>
-            <div className="pixelate-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="pixelate-container">
-                    <div className="pixelate-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="pixelate-title">Pixelate</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "250px", height: "130px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container">
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">Pixelate</p>
                     </div>
-                    <div className="pixelate-row-container">
-                        <div className="pixelate-row">
-                            <p className="pixelate-text">Strength: </p>
-                            <Slider className="pixelate-slider" onChange={(value) => {changeState("strength", value as number)}} min={1} max={50} step={1} value={state.strength}/>
+                    <div className="dialog-row-container">
+                        <div className="dialog-row">
+                            <p className="dialog-text">Strength: </p>
+                            <Slider className="dialog-slider" onChange={(value) => setPixelate(value as number)} min={1} max={10} 
+                            step={0.1} value={pixelate}/>
                         </div>
                     </div>
-                    <div className="pixelate-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>
                         <button onClick={() => click("accept")} className="accept-button">{"Ok"}</button>
                     </div>

@@ -3,7 +3,7 @@ import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
 import CheckboxIcon from "../assets/svg/checkbox.svg"
 import CheckboxCheckedIcon from "../assets/svg/checkbox-checked.svg"
-import "./styles/gifdialog.less"
+import "./styles/dialog.less"
 
 const GIFDialog: React.FunctionComponent = (props) => {
     const initialState = {
@@ -24,8 +24,9 @@ const GIFDialog: React.FunctionComponent = (props) => {
         })
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
         const savedValues = async () => {
@@ -39,8 +40,8 @@ const GIFDialog: React.FunctionComponent = (props) => {
             if (savedTransparentColor) changeState("transparentColor", savedTransparentColor)
         }
         savedValues()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         const clickCounter = () => {
             setClickCounter((prev) => prev + 1)
@@ -141,39 +142,40 @@ const GIFDialog: React.FunctionComponent = (props) => {
     }
 
     return (
-        <section className="gif-dialog" onMouseDown={close}>
-            <div className="gif-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="gif-container">
-                    <div className="gif-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="gif-title">GIF Options</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "190px", height: "175px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container">
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">GIF Options</p>
                     </div>
-                    <div className="gif-row-container">
-                        <div className="gif-row">
-                            <p className="gif-text">Speed: </p>
-                            <input className="gif-input" type="text" spellCheck="false" onChange={(event) => changeState("speed", event.target.value)} value={state.speed} onKeyDown={speedKey}/>
+                    <div className="dialog-row-container">
+                        <div className="dialog-row">
+                            <p className="dialog-text">Speed: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("speed", event.target.value)} value={state.speed} onKeyDown={speedKey}/>
                         </div>
-                        <div className="gif-row">
-                            <p className="gif-text">Reverse: </p>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Reverse: </p>
                             <div className="gif-checkbox-container">
                                 {state.reverse ?
                                 <CheckboxCheckedIcon className="gif-checkbox" onClick={() => changeState("reverse", !state.reverse)}/> : 
                                 <CheckboxIcon className="gif-checkbox" onClick={() => changeState("reverse", !state.reverse)}/>}
                             </div>
                         </div>
-                        <div className="gif-row">
-                            <p className="gif-text">Transparency: </p>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Transparency: </p>
                             <div className="gif-checkbox-container">
                                 {state.transparency ?
                                 <CheckboxCheckedIcon className="gif-checkbox" onClick={() => changeState("transparency", !state.transparency)}/> : 
                                 <CheckboxIcon className="gif-checkbox" onClick={() => changeState("transparency", !state.transparency)}/>}
                             </div>
                         </div>
-                        <div className="gif-row">
-                            <p className="gif-text">Transparent Color: </p>   
+                        <div className="dialog-row">
+                            <p className="dialog-text">Transparent Color: </p>   
                             <input type="color" className="gif-color-box" onChange={(event) => changeState("transparentColor", event.target.value)} onClick={() => setClickCounter(0)} value={state.transparentColor}></input>
                         </div>
                     </div>
-                    <div className="gif-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>
                         <button onClick={() => click("accept")} className="accept-button">{"Ok"}</button>
                     </div>

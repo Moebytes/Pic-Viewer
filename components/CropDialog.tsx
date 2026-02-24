@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "./styles/cropdialog.less"
+import "./styles/dialog.less"
 
 const CropDialog: React.FunctionComponent = (props) => {
     const initialState = {
@@ -16,8 +16,9 @@ const CropDialog: React.FunctionComponent = (props) => {
     useEffect(() => {
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
         const savedValues = async () => {
@@ -31,8 +32,8 @@ const CropDialog: React.FunctionComponent = (props) => {
             if (savedHeight) changeState("height", Number(savedHeight))
         }
         savedValues()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
@@ -154,31 +155,32 @@ const CropDialog: React.FunctionComponent = (props) => {
     }
 
     return (
-        <section className="crop-dialog" onMouseDown={close}>
-            <div className="crop-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="crop-container">
-                    <div className="crop-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="crop-title">Bulk Crop</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "190px", height: "220px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container">
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">Bulk Crop</p>
                     </div>
-                    <div className="crop-row-container">
-                        <div className="crop-row">
-                            <p className="crop-text">X %: </p>
-                            <input className="crop-input" type="text" spellCheck="false" onChange={(event) => changeState("x", event.target.value)} value={state.x} onKeyDown={xKey}/>
+                    <div className="dialog-row-container">
+                        <div className="dialog-row">
+                            <p className="dialog-text">X %: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("x", event.target.value)} value={state.x} onKeyDown={xKey}/>
                         </div>
-                        <div className="crop-row">
-                            <p className="crop-text">Y %: </p>
-                            <input className="crop-input" type="text" spellCheck="false" onChange={(event) => changeState("y", event.target.value)} value={state.y} onKeyDown={yKey}/>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Y %: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("y", event.target.value)} value={state.y} onKeyDown={yKey}/>
                         </div>
-                        <div className="crop-row">
-                            <p className="crop-text">Width %: </p>
-                            <input className="crop-input" type="text" spellCheck="false" onChange={(event) => changeState("width", event.target.value)} value={state.width} onKeyDown={widthKey}/>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Width %: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("width", event.target.value)} value={state.width} onKeyDown={widthKey}/>
                         </div>
-                        <div className="crop-row">
-                            <p className="crop-text">Height %: </p>
-                            <input className="crop-input" type="text" spellCheck="false" onChange={(event) => changeState("height", event.target.value)} value={state.height} onKeyDown={heightKey}/>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Height %: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("height", event.target.value)} value={state.height} onKeyDown={heightKey}/>
                         </div>
                     </div>
-                    <div className="crop-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>
                         <button onClick={() => click("accept")} className="accept-button">{"Ok"}</button>
                     </div>

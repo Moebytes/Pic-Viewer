@@ -1,8 +1,7 @@
-import Draggable from "react-draggable"
 import React, {useEffect, useState} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "./styles/bulksavedialog.less"
+import "./styles/dialog.less"
 
 const BulkSaveDialog: React.FunctionComponent = (props) => {
     const [hover, setHover] = useState(false)
@@ -10,12 +9,13 @@ const BulkSaveDialog: React.FunctionComponent = (props) => {
     useEffect(() => {
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
@@ -68,25 +68,24 @@ const BulkSaveDialog: React.FunctionComponent = (props) => {
     }
 
     return (
-        <section className="bulk-save-dialog" onMouseDown={close}>
-            <Draggable handle=".bulk-save-title-container">
-            <div className="bulk-save-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="bulk-save-container">
-                    <div className="bulk-save-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="bulk-save-title">Bulk Save</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "230px", height: "170px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container">
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">Bulk Save</p>
                     </div>
-                    <div className="bulk-save-row-container">
-                        <div className="bulk-save-row">
-                            <p className="bulk-save-text">Do you want to overwrite the original files?</p>
+                    <div className="dialog-row-container">
+                        <div className="dialog-row">
+                            <p className="dialog-mini-text">Do you want to overwrite the original files?</p>
                         </div>
                     </div>
-                    <div className="bulk-save-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">No</button>
                         <button onClick={() => click("accept")} className="accept-button">Yes</button>
                     </div>
                 </div>
             </div>
-            </Draggable>
         </section>
     )
 }

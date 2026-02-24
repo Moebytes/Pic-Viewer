@@ -2,7 +2,7 @@ import Slider from "rc-slider"
 import React, {useEffect, useState} from "react"
 import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
-import "./styles/hsldialog.less"
+import "./styles/dialog.less"
 
 const HSLDialog: React.FunctionComponent = (props) => {
     const initialState = {
@@ -17,8 +17,9 @@ const HSLDialog: React.FunctionComponent = (props) => {
     useEffect(() => {
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
-            const transparency = await window.ipcRenderer.invoke("get-transparency")
-            functions.updateTheme(theme, transparency)
+            const transparent = await window.ipcRenderer.invoke("get-transparent")
+            functions.updateTheme(theme, transparent)
+            window.ipcRenderer.invoke("ready-to-show")
         }
         initTheme()
         const savedValues = async () => {
@@ -30,8 +31,8 @@ const HSLDialog: React.FunctionComponent = (props) => {
             if (savedLightness) changeState("lightness", Number(savedLightness))
         }
         savedValues()
-        const updateTheme = (event: any, theme: string, transparency: boolean) => {
-            functions.updateTheme(theme, transparency)
+        const updateTheme = (event: any, theme: string, transparent: boolean) => {
+            functions.updateTheme(theme, transparent)
         }
         window.ipcRenderer.on("update-theme", updateTheme)
         return () => {
@@ -110,27 +111,28 @@ const HSLDialog: React.FunctionComponent = (props) => {
     }
 
     return (
-        <section className="hsl-dialog" onMouseDown={close}>
-            <div className="hsl-dialog-box" onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <div className="hsl-container">
-                    <div className="hsl-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
-                        <p className="hsl-title">HSL Adjustment</p>
+        <section className="dialog" onMouseDown={close}>
+            <div className="dialog-box" style={{width: "250px", height: "180px"}}
+            onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+                <div className="dialog-container">
+                    <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
+                        <p className="dialog-title">HSL Adjustment</p>
                     </div>
-                    <div className="hsl-row-container">
-                        <div className="hsl-row">
-                            <p className="hsl-text">Hue: </p>
-                            <Slider className="hsl-slider" onChange={(value) => {changeState("hue", value as number)}} min={-180} max={180} step={1} value={state.hue}/>
+                    <div className="dialog-row-container">
+                        <div className="dialog-row">
+                            <p className="dialog-text">Hue: </p>
+                            <Slider className="dialog-slider" onChange={(value) => {changeState("hue", value as number)}} min={-180} max={180} step={1} value={state.hue}/>
                         </div>
-                        <div className="hsl-row">
-                            <p className="hsl-text">Saturation: </p>
-                            <Slider className="hsl-slider" onChange={(value) => {changeState("saturation", value as number)}} min={0.5} max={1.5} step={0.1} value={state.saturation}/>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Saturation: </p>
+                            <Slider className="dialog-slider" onChange={(value) => {changeState("saturation", value as number)}} min={0.5} max={1.5} step={0.1} value={state.saturation}/>
                         </div>
-                        <div className="hsl-row">
-                            <p className="hsl-text">Lightness: </p>
-                            <Slider className="hsl-slider" onChange={(value) => {changeState("lightness", value as number)}} min={-100} max={100} step={1} value={state.lightness}/>
+                        <div className="dialog-row">
+                            <p className="dialog-text">Lightness: </p>
+                            <Slider className="dialog-slider" onChange={(value) => {changeState("lightness", value as number)}} min={-100} max={100} step={1} value={state.lightness}/>
                         </div>
                     </div>
-                    <div className="hsl-button-container">
+                    <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>
                         <button onClick={() => click("accept")} className="accept-button">{"Ok"}</button>
                     </div>

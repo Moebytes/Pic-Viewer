@@ -1,6 +1,7 @@
 import fs from "fs"
 import path from "path"
 import unzipper from "unzipper"
+import sharp from "sharp"
 import functions from "./functions"
 
 const imageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".avif", ".tiff", ".gif"]
@@ -19,7 +20,7 @@ export default class MainFunctions {
             for (let i = 0; i < zip.files.length; i++) {
                 frameArray.push(await zip.files[i].buffer())
             }
-            const {width, height} = await window.ipcRenderer.invoke("get-width-height", frameArray[0])
+            const {width, height} = await MainFunctions.getDimensions(frameArray[0])
             const buffer = await functions.encodeGIF(frameArray, delayArray, width, height)
             url = functions.bufferToBase64(buffer, "gif")
         } else {
@@ -27,6 +28,11 @@ export default class MainFunctions {
             url = await functions.linkToBase64(rawUrl)
         }
         return {name: `${illust.title}_${illust.id}`, url, siteUrl: `https://www.pixiv.net/en/artworks/${illust.id}`}
+    }
+
+    public static getDimensions = async (image: any) => {
+      const metadata = await sharp(image).metadata()
+      return {width: metadata.width ?? 0, height: metadata.height ?? 0}
     }
 
     public static removeDirectory = (dir: string) => {
