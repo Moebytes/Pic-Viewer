@@ -112,6 +112,7 @@ const PhotoViewer: React.FunctionComponent = () => {
         window.ipcRenderer.on("open-file", openFile)
         window.ipcRenderer.on("open-link", openLink)
         window.ipcRenderer.on("upload-file", uploadFile)
+        window.ipcRenderer.on("save-img", save)
         window.ipcRenderer.on("trigger-paste", triggerPaste)
         window.ipcRenderer.on("apply-brightness", brightness)
         window.ipcRenderer.on("apply-hsl", hue)
@@ -131,11 +132,13 @@ const PhotoViewer: React.FunctionComponent = () => {
         window.ipcRenderer.on("draw-clear", clearDraw)
         window.ipcRenderer.on("draw-increase-size", increaseBrushSize)
         window.ipcRenderer.on("draw-decrease-size", decreaseBrushSize)
+        window.ipcRenderer.on("accept-action-response", acceptActionResponse)
         document.addEventListener("dblclick", doubleClick)
         return () => {
             window.ipcRenderer.removeListener("open-file", openFile)
             window.ipcRenderer.removeListener("upload-file", openFile)
             window.ipcRenderer.removeListener("open-link", openLink)
+            window.ipcRenderer.removeListener("save-img", save)
             window.ipcRenderer.removeListener("trigger-paste", triggerPaste)
             window.ipcRenderer.removeListener("apply-brightness", brightness)
             window.ipcRenderer.removeListener("apply-hsl", hue)
@@ -156,6 +159,7 @@ const PhotoViewer: React.FunctionComponent = () => {
             window.ipcRenderer.removeListener("draw-decrease-size", decreaseBrushSize)
             document.removeEventListener("dblclick", doubleClick)
             window.ipcRenderer.removeListener("apply-crop", bulkCrop)
+            window.ipcRenderer.removeListener("accept-action-response", acceptActionResponse)
         }
     }, [])
 
@@ -238,44 +242,15 @@ const PhotoViewer: React.FunctionComponent = () => {
         }
         window.ipcRenderer.on("copy-image", copyImage)
         window.ipcRenderer.on("copy-address", copyAddress)
-        window.ipcRenderer.on("save-img", save)
         window.ipcRenderer.on("update-images", updateImages)
         return () => {
             window.ipcRenderer.removeListener("copy-image", copyImage)
             window.ipcRenderer.removeListener("copy-address", copyAddress)
-            window.ipcRenderer.removeListener("save-img", save)
             window.ipcRenderer.removeListener("update-images", updateImages)
         }
     }, [image, bulk, bulkFiles])
 
     useEffect(() => {
-        const commitCrop = async (response: "accept" | "cancel" | "square") => {
-            if (response === "square") {
-                return setCropState((prev: any) => {
-                    return {...prev, aspect: prev.aspect ? undefined : 1}
-                })
-            } else if (response === "accept") {
-                const newImages = await window.ipcRenderer.invoke("crop", cropState)
-                if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
-            }
-            toggleCrop(false)
-            window.ipcRenderer.invoke("clear-accept-action")
-        }
-        const commitDraw = async (response: "accept" | "cancel" | "square") => {
-            if (response === "accept") {
-                saveDrawing()
-            }
-            setDrawing(false)
-            setErasing(false)
-            window.ipcRenderer.invoke("clear-accept-action")
-        }
-        const acceptActionResponse = (event: any, action: string, response: "accept" | "cancel" | "square") => {
-            if (action === "crop") {
-                commitCrop(response)
-            } else if (action === "draw") {
-                commitDraw(response)
-            }
-        }
         const keyDown = async (event: globalThis.KeyboardEvent) => {
             if (event.key === "Enter") {
                 if (cropEnabled) commitCrop("accept")
@@ -358,37 +333,46 @@ const PhotoViewer: React.FunctionComponent = () => {
             document.documentElement.style.setProperty("cursor", "default")
             setRotateEnabled(false)
         }
-        const wheel = (event: WheelEvent) => {
-            /*
-            // @ts-ignore
-            const trackPad = event.wheelDeltaY ? event.wheelDeltaY === -3 * event.deltaY : event.deltaMode === 0
-            if (event.deltaY < 0) {
-                if (trackPad) {
-                    increaseBrushSize()
-                } else {
-                    decreaseBrushSize()
-                }
-            } else {
-                if (trackPad) {
-                    decreaseBrushSize()
-                } else {
-                    increaseBrushSize()
-                }
-            }*/
-        }
-        window.ipcRenderer.on("accept-action-response", acceptActionResponse)
-        document.addEventListener("wheel", wheel)
         document.addEventListener("keydown", keyDown)
         document.addEventListener("keyup", keyUp)
         document.addEventListener("mousemove", mouseMove)
         document.addEventListener("click", onClick)
         return () => {
-            window.ipcRenderer.removeListener("accept-action-response", acceptActionResponse)
-            document.removeEventListener("wheel", wheel)
             document.removeEventListener("keydown", keyDown)
             document.removeEventListener("keyup", keyUp)
             document.removeEventListener("mousemove", mouseMove)
             document.removeEventListener("click", onClick)
+        }
+    })
+
+    
+    const commitCrop = useEffectEvent(async (response: "accept" | "cancel" | "square") => {
+        if (response === "square") {
+            return setCropState((prev: any) => {
+                return {...prev, aspect: prev.aspect ? undefined : 1}
+            })
+        } else if (response === "accept") {
+            const newImages = await window.ipcRenderer.invoke("crop", cropState)
+            if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
+        }
+        toggleCrop(false)
+        window.ipcRenderer.invoke("clear-accept-action")
+    })
+
+    const commitDraw = useEffectEvent(async (response: "accept" | "cancel" | "square") => {
+        if (response === "accept") {
+            saveDrawing()
+        }
+        setDrawing(false)
+        setErasing(false)
+        window.ipcRenderer.invoke("clear-accept-action")
+    })
+
+    const acceptActionResponse = useEffectEvent((event: any, action: string, response: "accept" | "cancel" | "square") => {
+        if (action === "crop") {
+            commitCrop(response)
+        } else if (action === "draw") {
+            commitDraw(response)
         }
     })
 

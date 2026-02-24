@@ -1,6 +1,6 @@
 {
   "name": "pic-viewer",
-  "version": "0.9.9",
+  "version": "1.0.0",
   "description": "A simple image viewer.",
   "main": "dist/main/index.js",
   "scripts": {

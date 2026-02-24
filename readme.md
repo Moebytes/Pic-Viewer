@@ -44,8 +44,6 @@ A simple image viewer app.
 
 Our design is available here: https://www.figma.com/design/kqGaBzYxe93zSPxDPz6wRa/Pic-Viewer
 
-*New design is wip
-
 ### Installation
 
 Download from [releases](https://github.com/Moebytes/Pic-Viewer/releases).
