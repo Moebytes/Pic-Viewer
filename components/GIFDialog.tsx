@@ -143,18 +143,18 @@ const GIFDialog: React.FunctionComponent = (props) => {
 
     return (
         <section className="dialog" onMouseDown={close}>
-            <div className="dialog-box" style={{width: "190px", height: "175px"}}
+            <div className="dialog-box" style={{width: "190px", height: "240px"}}
             onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <div className="dialog-container">
                     <div className="dialog-title-container" onMouseDown={() => window.ipcRenderer.send("moveWindow")}>
                         <p className="dialog-title">GIF Options</p>
                     </div>
                     <div className="dialog-row-container">
-                        <div className="dialog-row">
+                        <div className="dialog-row-start" style={{gap: "20px"}}>
                             <p className="dialog-text">Speed: </p>
                             <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("speed", event.target.value)} value={state.speed} onKeyDown={speedKey}/>
                         </div>
-                        <div className="dialog-row">
+                        <div className="dialog-row-start" style={{gap: "20px"}}>
                             <p className="dialog-text">Reverse: </p>
                             <div className="gif-checkbox-container">
                                 {state.reverse ?
@@ -162,7 +162,7 @@ const GIFDialog: React.FunctionComponent = (props) => {
                                 <CheckboxIcon className="gif-checkbox" onClick={() => changeState("reverse", !state.reverse)}/>}
                             </div>
                         </div>
-                        <div className="dialog-row">
+                        <div className="dialog-row-start" style={{gap: "20px"}}>
                             <p className="dialog-text">Transparency: </p>
                             <div className="gif-checkbox-container">
                                 {state.transparency ?
@@ -170,7 +170,7 @@ const GIFDialog: React.FunctionComponent = (props) => {
                                 <CheckboxIcon className="gif-checkbox" onClick={() => changeState("transparency", !state.transparency)}/>}
                             </div>
                         </div>
-                        <div className="dialog-row">
+                        <div className="dialog-row-start" style={{gap: "20px"}}>
                             <p className="dialog-text">Transparent Color: </p>   
                             <input type="color" className="gif-color-box" onChange={(event) => changeState("transparentColor", event.target.value)} onClick={() => setClickCounter(0)} value={state.transparentColor}></input>
                         </div>

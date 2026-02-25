@@ -104,8 +104,7 @@ export default class Functions {
     }
 
     public static base64ToBuffer = (base64: string) => {
-        const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)!
-        return Buffer.from(matches[2], "base64")
+        return Buffer.from(base64.split("base64,")[1], "base64")
     }
 
     public static bufferToBase64 = (buffer: Buffer, type: string) => {
@@ -220,28 +219,28 @@ export default class Functions {
         const maxHeight = 942
         const minWidth = 520
         const minHeight = 250
+
         let newWidth = width
         let newHeight = height
-        if (width > maxWidth) {
-            const scale = width / maxWidth
-            newWidth /= scale
-            newHeight /= scale
-        }
-        if (height > maxHeight) {
-            const scale = height / maxHeight
-            newHeight /= scale
-            newWidth /= scale
-        }
-        if (minWidth > width) {
-            const scale = minWidth / width
+
+        if (newWidth > maxWidth || newHeight > maxHeight) {
+            const scale = Math.min(
+                maxWidth / newWidth,
+                maxHeight / newHeight
+            )
             newWidth *= scale
             newHeight *= scale
         }
-        if (minHeight > height) {
-            const scale = minHeight / height
-            newHeight *= scale
+
+        if (newWidth < minWidth || newHeight < minHeight) {
+            const scale = Math.max(
+                minWidth / newWidth,
+                minHeight / newHeight
+            )
             newWidth *= scale
+            newHeight *= scale
         }
+        
         return {width: Math.floor(newWidth), height: Math.floor(newHeight)}
     }
 

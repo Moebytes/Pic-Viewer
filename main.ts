@@ -118,12 +118,15 @@ ipcMain.handle("close-current-dialog", () => {
   currentDialog?.close()
 })
 
-ipcMain.handle("resize-window", async (event, image: string) => {
+const resizeWindow = async (image: string) => {
   const dim = await mainFunctions.getDimensions(image)
   const {width, height} = functions.constrainDimensions(dim.width, dim.height)
-  // window?.setSize(width, height, true)
-})
+  window?.setSize(width, height, true)
+}
 
+ipcMain.handle("resize-window", async (event, image: string) => {
+  resizeWindow(image)
+})
 
 ipcMain.handle("save-image", async (event, image: any, savePath: string) => {
   saveImage(image, savePath)
@@ -282,7 +285,7 @@ ipcMain.handle("show-gif-dialog", async (event) => {
     if (currentDialog.type === "gif") return
   }
   const bounds = window?.getBounds()!
-  currentDialog = new BrowserWindow({width: 190, height: 175, x: bounds.x + bounds.width - 190 - 170, y: bounds.y + 60, 
+  currentDialog = new BrowserWindow({width: 190, height: 240, x: bounds.x + bounds.width - 190 - 170, y: bounds.y + 60, 
     resizable: false, show: false, frame: false, transparent: true, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/gifdialog.html"))
@@ -1231,6 +1234,15 @@ ipcMain.handle("save-transparent", (event, transparent: boolean) => {
   store.set("transparent", transparent)
 })
 
+ipcMain.handle("get-pinned", () => {
+  return store.get("pinned", false)
+})
+
+ipcMain.handle("save-pinned", (event, pinned: boolean) => {
+  store.set("pinned", pinned)
+  window?.setAlwaysOnTop(pinned)
+})
+
 ipcMain.handle("get-img-drag", () => {
   return store.get("img-drag", true)
 })
@@ -1277,6 +1289,10 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
     {label: "Get Info", click: () => {
       event.sender.send("close-all-dialogs", "info")
       event.sender.send("show-info-dialog", {x, y})
+    }},
+    {label: "Resize Window", click: () => {
+      let images = historyStates[historyIndex] as any
+      if (images?.[0]) resizeWindow(images[0])
     }},
     {type: "separator"},
     {label: "Save Image", click: () => event.sender.send("save-img")},
@@ -1375,6 +1391,13 @@ const applicationMenu = () =>  {
             const win = window as BrowserWindow
             win?.webContents.send("zoom-out")
           }
+        },
+        {
+          label: "Resize Window",
+          click: () => {
+            let images = historyStates[historyIndex] as any
+            if (images?.[0]) resizeWindow(images[0])
+          }
         }
       ]
     },
@@ -1407,7 +1430,7 @@ if (!singleLock) {
   })
 
   app.on("ready", () => {
-    window = new BrowserWindow({width: 900, height: 650, minWidth: 520, minHeight: 250, show: false, frame: false, 
+    window = new BrowserWindow({width: 900, height: 650, minWidth: 200, minHeight: 200, show: false, frame: false, 
     transparent: true, hasShadow: false, backgroundColor: "#00000000", center: true, webPreferences: {
       preload: path.join(__dirname, "../preload/index.js")}})
     window.loadFile(path.join(__dirname, "../renderer/index.html"))

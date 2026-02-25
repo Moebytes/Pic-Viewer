@@ -26,6 +26,7 @@ import GIFIcon from "../assets/svg/gif.svg"
 import ImageDragIcon from "../assets/svg/img-drag.svg"
 import ImagePanIcon from "../assets/svg/img-pan.svg"
 import TransparentIcon from "../assets/svg/transparent.svg"
+import PinIcon from "../assets/svg/pin.svg"
 import LightIcon from "../assets/svg/light.svg"
 import DarkIcon from "../assets/svg/dark.svg"
 import WindowsIcon from "../assets/svg/windows.svg"
@@ -37,8 +38,8 @@ const TitleBar: React.FunctionComponent = () => {
     const {setImageDrag} = useActiveActions()
     const {drawing, erasing, brushColor} = useDrawingSelector()
     const {setErasing, setBrushColor} = useDrawingActions()
-    const {theme, os, transparent} = useThemeSelector()
-    const {setTheme, setOS, setTransparent} = useThemeActions()
+    const {theme, os, transparent, pinned} = useThemeSelector()
+    const {setTheme, setOS, setTransparent, setPinned} = useThemeActions()
     const [acceptAction, setAcceptAction] = useState(null as any)
     const [iconHover, setIconHover] = useState(false)
 
@@ -139,6 +140,10 @@ const TitleBar: React.FunctionComponent = () => {
         setTransparent(!transparent)
     }
 
+    const switchPinned = () => {
+        setPinned(!pinned)
+    }
+
     const triggerAction = (response: "accept" | "cancel" | "square") => {
         window.ipcRenderer.invoke("accept-action-response", acceptAction, response)
         if (response !== "square") setAcceptAction(null)
@@ -173,6 +178,7 @@ const TitleBar: React.FunctionComponent = () => {
                     <ImageDragIcon className="title-bar-button" onClick={drag}/> :
                     <ImagePanIcon className="title-bar-button" onClick={drag}/>}
                     <TransparentIcon className="title-bar-button" onClick={switchTransparency}/>
+                    <PinIcon className={`title-bar-button ${pinned && "title-button-active"}`} onClick={switchPinned}/>
                     {theme === "light" ?
                     <LightIcon className="title-bar-button" onClick={switchTheme}/> :
                     <DarkIcon className="title-bar-button" onClick={switchTheme}/>}
@@ -216,6 +222,7 @@ const TitleBar: React.FunctionComponent = () => {
                     <ImageDragIcon className="title-bar-button" onClick={drag}/> :
                     <ImagePanIcon className="title-bar-button" onClick={drag}/>}
                     <TransparentIcon className="title-bar-button" onClick={switchTransparency}/>
+                    <PinIcon className={`title-bar-button ${pinned && "title-button-active"}`} onClick={switchPinned}/>
                     {theme === "light" ?
                     <LightIcon className="title-bar-button" onClick={switchTheme}/> :
                     <DarkIcon className="title-bar-button" onClick={switchTheme}/>}

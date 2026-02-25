@@ -31,8 +31,15 @@ export default class MainFunctions {
     }
 
     public static getDimensions = async (image: any) => {
-      const metadata = await sharp(image).metadata()
-      return {width: metadata.width ?? 0, height: metadata.height ?? 0}
+        let input = image
+
+        if (typeof image === "string") {
+            if (image.startsWith("data:")) {
+                input = functions.base64ToBuffer(image)
+            }
+        }
+        const metadata = await sharp(input).metadata()
+        return {width: metadata.width ?? 0, height: metadata.height ?? 0}
     }
 
     public static removeDirectory = (dir: string) => {
