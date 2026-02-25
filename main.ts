@@ -121,6 +121,7 @@ ipcMain.handle("close-current-dialog", () => {
 const resizeWindow = async (image: string) => {
   const dim = await mainFunctions.getDimensions(image)
   const {width, height} = functions.constrainDimensions(dim.width, dim.height)
+  window?.setAspectRatio(width / height)
   window?.setSize(width, height, true)
 }
 
@@ -1290,9 +1291,12 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
       event.sender.send("close-all-dialogs", "info")
       event.sender.send("show-info-dialog", {x, y})
     }},
-    {label: "Resize Window", click: () => {
+    {label: "Lock Aspect Ratio", click: () => {
       let images = historyStates[historyIndex] as any
       if (images?.[0]) resizeWindow(images[0])
+    }},
+    {label: "Unlock Aspect Ratio", click: () => {
+      window?.setAspectRatio(0)
     }},
     {type: "separator"},
     {label: "Save Image", click: () => event.sender.send("save-img")},
@@ -1393,10 +1397,17 @@ const applicationMenu = () =>  {
           }
         },
         {
-          label: "Resize Window",
+          label: "Lock Aspect Ratio",
           click: () => {
             let images = historyStates[historyIndex] as any
             if (images?.[0]) resizeWindow(images[0])
+          }
+        },
+        {
+          label: "Unlock Aspect Ratio",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win.setAspectRatio(0)
           }
         }
       ]
