@@ -54,6 +54,7 @@ const PhotoViewer: React.FunctionComponent = () => {
     const effectRef = useRef<HTMLCanvasElement>(null)
     const imageRef = useRef<HTMLImageElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+    const fullscreenRef = useRef<HTMLDivElement>(null)
     const bulkRef = useRef<BulkRef>(null)
     const zoomRef = useRef(null) as any
 
@@ -113,6 +114,7 @@ const PhotoViewer: React.FunctionComponent = () => {
         window.ipcRenderer.on("open-link", openLink)
         window.ipcRenderer.on("upload-file", uploadFile)
         window.ipcRenderer.on("save-img", save)
+        window.ipcRenderer.on("fullscreen", fullscreen)
         window.ipcRenderer.on("trigger-paste", triggerPaste)
         window.ipcRenderer.on("apply-brightness", brightness)
         window.ipcRenderer.on("apply-hsl", hue)
@@ -139,6 +141,7 @@ const PhotoViewer: React.FunctionComponent = () => {
             window.ipcRenderer.removeListener("upload-file", openFile)
             window.ipcRenderer.removeListener("open-link", openLink)
             window.ipcRenderer.removeListener("save-img", save)
+            window.ipcRenderer.removeListener("fullscreen", fullscreen)
             window.ipcRenderer.removeListener("trigger-paste", triggerPaste)
             window.ipcRenderer.removeListener("apply-brightness", brightness)
             window.ipcRenderer.removeListener("apply-hsl", hue)
@@ -741,13 +744,21 @@ const PhotoViewer: React.FunctionComponent = () => {
         if (newImages) bulk ? setBulkFiles(newImages) : setImage(newImages[0])
     })
 
+    const fullscreen = () => {
+        if (document.fullscreenElement) {
+            document.exitFullscreen()
+        } else {
+            fullscreenRef.current?.requestFullscreen()
+        }
+    }
+
     const dragImage = () => {
         if (!imageDrag || drawing || cropEnabled || infoDialogActive) return
         window.ipcRenderer.send("moveWindow")
     }
 
     return (
-        <main className="photo-viewer" {...getRootProps()}>
+        <main className="photo-viewer" {...getRootProps()} ref={fullscreenRef}>
             <div className={hover && !drawing ? "left-adjustment-bar visible" : "left-adjustment-bar"} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <BrightnessIcon className="adjustment-img" onClick={() => brightness()}/>
                 <HueIcon className="adjustment-img" onClick={() => hue()}/>

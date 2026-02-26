@@ -1298,6 +1298,7 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
     {label: "Unlock Aspect Ratio", click: () => {
       window?.setAspectRatio(0)
     }},
+    {label: "Toggle Fullscreen", click: () => event.sender.send("fullscreen")},
     {type: "separator"},
     {label: "Save Image", click: () => event.sender.send("save-img")},
     {label: "Copy Address", click: () => event.sender.send("copy-address", {x, y})},
@@ -1408,6 +1409,13 @@ const applicationMenu = () =>  {
           click: (item, window) => {
             const win = window as BrowserWindow
             win.setAspectRatio(0)
+          }
+        },
+        {
+          label: "Toggle Fullscreen",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win?.webContents.send("fullscreen")
           }
         }
       ]
