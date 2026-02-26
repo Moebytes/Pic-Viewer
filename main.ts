@@ -382,7 +382,11 @@ const getMetadata = async (images: any, toBuffer?: boolean) => {
     const frames = metadata.pages ? metadata.pages : 1
     const format = metadata.format ? metadata.format : "?"
     const space = metadata.space ? metadata.space : "?"
-    metaArray.push({image: images[i], name, width, height, size, format, dpi, frames, space})
+    const bitDepth = metadata.bitsPerSample || (metadata.depth === "uchar" ? 8 : 
+      metadata.depth === "ushort" ? 16 : metadata.depth === "float" ? 32 : undefined)
+    const progressive = metadata.isProgressive
+    const alpha = metadata.hasAlpha
+    metaArray.push({image: images[i], name, width, height, size, format, dpi, frames, space, bitDepth, progressive, alpha})
   }
   return metaArray
 }
