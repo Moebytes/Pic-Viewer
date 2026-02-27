@@ -4,12 +4,9 @@ import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
 import "./styles/dialog.less"
 
-const BrightnessDialog: React.FunctionComponent = (props) => {
-    const initialState = {
-        brightness: 1,
-        contrast: 1
-    }
-    const [state, setState] = useState(initialState)
+const BrightnessDialog: React.FunctionComponent = () => {
+    const [brightness, setBrightness] = useState(100)
+    const [contrast, setContrast] = useState(100)
     const [hover, setHover] = useState(false)
 
     useEffect(() => {
@@ -23,8 +20,8 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
         const savedValues = async () => {
             const savedBrightness = await window.ipcRenderer.invoke("get-temp", "brightness")
             const savedContrast = await window.ipcRenderer.invoke("get-temp", "contrast")
-            if (savedBrightness) changeState("brightness", Number(savedBrightness))
-            if (savedContrast) changeState("contrast", Number(savedContrast))
+            if (savedBrightness) setBrightness(Number(savedBrightness))
+            if (savedContrast) setContrast(Number(savedContrast))
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparent: boolean) => {
@@ -60,30 +57,14 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
             window.ipcRenderer.removeListener("escape-pressed", escapePressed)
         }
     })
-    
-    const changeState = (type: string, value: number) => {
-        switch(type) {
-            case "brightness":
-                setState((prev) => {
-                    return {...prev, brightness: value}
-                })
-                window.ipcRenderer.invoke("apply-brightness", {...state, brightness: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "brightness", String(value))
-                break
-            case "contrast":
-                setState((prev) => {
-                    return {...prev, contrast: value}
-                })
-                window.ipcRenderer.invoke("apply-brightness", {...state, contrast: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "contrast", String(value))
-                break
-        }
-    }
 
-    const closeAndReset = async (noRevert?: boolean) => {
-        if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
+    useEffect(() => {
+        window.ipcRenderer.send("sync-redux-state", {brightness, contrast})
+    }, [brightness, contrast])
+
+
+    const closeAndReset = async () => {
         await window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
     }
     
     const close = () => {
@@ -92,11 +73,15 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
         }, 100)
     }
 
-    const click = (button: "accept" | "reject") => {
+    const click = async (button: "accept" | "reject") => {
         if (button === "accept") {
-            window.ipcRenderer.invoke("apply-brightness", state)
+            window.ipcRenderer.invoke("apply-brightness", {brightness, contrast})
+        } else {  
+            window.ipcRenderer.send("sync-redux-state", {brightness: 100, contrast: 100})
         }
-        closeAndReset(button === "accept")
+        window.ipcRenderer.invoke("save-temp", "brightness", String(brightness))
+        window.ipcRenderer.invoke("save-temp", "contrast", String(contrast))
+        closeAndReset()
     }
 
     return (
@@ -110,11 +95,11 @@ const BrightnessDialog: React.FunctionComponent = (props) => {
                     <div className="dialog-row-container">
                         <div className="dialog-row">
                             <p className="dialog-text">Brightness: </p>
-                            <Slider className="dialog-slider" onChange={(value) => {changeState("brightness", value as number)}} min={0.5} max={1.5} step={0.1} value={state.brightness}/>
+                            <Slider className="dialog-slider" onChange={(value) => setBrightness(value as number)} min={5} max={200} step={1} value={brightness}/>
                         </div>
                         <div className="dialog-row">
                             <p className="dialog-text">Contrast: </p>
-                            <Slider className="dialog-slider" onChange={(value) => {changeState("contrast", value as number)}} min={0.5} max={1.5} step={0.1} value={state.contrast}/>
+                            <Slider className="dialog-slider" onChange={(value) => setContrast(value as number)} min={5} max={200} step={1} value={contrast}/>
                         </div>
                     </div>
                     <div className="dialog-button-container">

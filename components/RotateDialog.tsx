@@ -9,15 +9,8 @@ import RightArrowIcon from "../assets/svg/right-arrow.svg"
 import "./styles/dialog.less"
 
 const RotateDialog: React.FunctionComponent = () => {
-    const initialState = {
-        degrees: 0
-    }
-    const [state, setState] = useState(initialState)
+    const [degrees, setDegrees] = useState(0)
     const [hover, setHover] = useState(false)
-    const [downHover, setDownHover] = useState(false)
-    const [upHover, setUpHover] = useState(false)
-    const [leftHover, setLeftHover] = useState(false)
-    const [rightHover, setRightHover] = useState(false)
 
     useEffect(() => {
         const initTheme = async () => {
@@ -29,7 +22,7 @@ const RotateDialog: React.FunctionComponent = () => {
         initTheme()
         const savedValues = async () => {
             const savedRotation = await window.ipcRenderer.invoke("get-temp", "rotation")
-            if (savedRotation) changeState("degrees", Number(savedRotation))
+            if (savedRotation) setDegrees(Number(savedRotation))
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparent: boolean) => {
@@ -66,22 +59,15 @@ const RotateDialog: React.FunctionComponent = () => {
         }
     })
 
-    const changeState = (type: string, value: number) => {
-        switch(type) {
-            case "degrees":
-                setState((prev) => {
-                    return {...prev, degrees: value}
-                })
-                window.ipcRenderer.invoke("apply-rotate", {...state, degrees: value, realTime: true})
-                window.ipcRenderer.invoke("get-temp", "rotation", String(value))
-                break
-        }
-    }
+    useEffect(() => {
+        window.ipcRenderer.invoke("rotate", {degrees, realTime: true})
+        window.ipcRenderer.invoke("get-temp", "rotation", String(degrees))
+    }, [degrees])
 
     const closeAndReset = async (noRevert?: boolean) => {
         if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
         await window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
+        setDegrees(0)
     }
     
     const close = () => {
@@ -92,20 +78,20 @@ const RotateDialog: React.FunctionComponent = () => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            window.ipcRenderer.invoke("apply-rotate", state)
+            window.ipcRenderer.invoke("apply-rotate", {degrees})
         }
         closeAndReset(button === "accept")
     }
 
     const degreeKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "ArrowUp") {
-            let degrees = state.degrees + 1
-            if (degrees > 180) degrees = -180
-            changeState("degrees", degrees)
+            let newDegrees = degrees + 1
+            if (newDegrees > 180) newDegrees = -180
+            setDegrees(newDegrees)
         } else if (event.key === "ArrowDown") {
-            let degrees = state.degrees - 1
-            if (degrees < -180) degrees = 180
-            changeState("degrees", degrees)
+            let newDegrees = degrees - 1
+            if (newDegrees < -180) newDegrees = 180
+            setDegrees(newDegrees)
         }
     }
 
@@ -120,17 +106,19 @@ const RotateDialog: React.FunctionComponent = () => {
                     <div className="dialog-row-container">
                         <div className="dialog-row">
                             <p className="dialog-text">Degrees: </p>
-                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("degrees", Number(event.target.value))} value={state.degrees} onKeyDown={degreeKey}/>
+                            <input className="dialog-input" type="text" spellCheck="false" 
+                            onChange={(event) => setDegrees(Number(event.target.value))} value={degrees} onKeyDown={degreeKey}/>
                         </div>
                         <div className="dialog-row">
-                            <Slider className="dialog-slider" onChange={(value) => {changeState("degrees", value as number)}} min={-180} max={180} step={1} value={state.degrees}/>
+                            <Slider className="dialog-slider" onChange={(value) => setDegrees(value as number)} 
+                            min={-180} max={180} step={1} value={degrees}/>
                         </div>
                     </div>
                     <div className="rotate-arrow-container">
-                        <LeftArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", -90)}/>
-                        <DownArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", 180)}/>
-                        <UpArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", 0)}/>
-                        <RightArrowIcon className="rotate-arrow" onClick={() => changeState("degrees", 90)}/>
+                        <LeftArrowIcon className="rotate-arrow" onClick={() => setDegrees(-90)}/>
+                        <DownArrowIcon className="rotate-arrow" onClick={() =>  setDegrees(180)}/>
+                        <UpArrowIcon className="rotate-arrow" onClick={() =>  setDegrees(0)}/>
+                        <RightArrowIcon className="rotate-arrow" onClick={() =>  setDegrees(90)}/>
                     </div>
                     <div className="dialog-button-container">
                         <button onClick={() => click("reject")} className="reject-button">{"Cancel"}</button>

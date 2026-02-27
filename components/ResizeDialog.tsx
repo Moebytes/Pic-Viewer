@@ -7,28 +7,27 @@ import ChainBottomIcon from "../assets/svg/chain-bottom.svg"
 import "./styles/dialog.less"
 
 const ResizeDialog: React.FunctionComponent = () => {
-    const initialState = {
-        width: 0,
-        height: 0,
-        originalWidth: 0,
-        originalHeight: 0,
-        link: true,
-        percent: false
-    }
-    const [state, setState] = useState(initialState)
+    const [width, setWidth] = useState(0)
+    const [height, setHeight] = useState(0)
+    const [originalWidth, setOriginalWidth] = useState(0)
+    const [originalHeight, setOriginalHeight] = useState(0)
+    const [link, setLink] = useState(true)
+    const [percent, setPercent] = useState(false)
     const [hover, setHover] = useState(false)
-    const [hoverChain, setHoverChain] = useState(false)
 
     useEffect(() => {
         window.ipcRenderer.invoke("get-metadata").then((metadata: any) => {
             if (metadata.length > 1) {
-                setState((prev) => {
-                    return {...prev, width: 100, height: 100, originalWidth: 100, originalHeight: 100, percent: true}
-                })
+                setWidth(100)
+                setHeight(100)
+                setOriginalWidth(100)
+                setOriginalHeight(100)
+                setPercent(true)
             } else {
-                setState((prev) => {
-                    return {...prev, width: metadata[0].width, height: metadata[0].height, originalWidth: metadata[0].width, originalHeight: metadata[0].height}
-                })
+                setWidth(metadata[0].width)
+                setHeight(metadata[0].height)
+                setOriginalWidth(metadata[0].width)
+                setOriginalHeight(metadata[0].height)
             }
         })
         const initTheme = async () => {
@@ -40,7 +39,12 @@ const ResizeDialog: React.FunctionComponent = () => {
         initTheme()
         const savedValues = async () => {
             const savedResize = await window.ipcRenderer.invoke("get-temp", "resize")
-            if (savedResize) changeState("resize", JSON.parse(savedResize))
+            if (savedResize) {
+                const json = JSON.parse(savedResize)
+                setWidth(Number(json.width))
+                setHeight(Number(json.height))
+                setPercent(json.percent === "true")
+            }
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparent: boolean) => {
@@ -77,22 +81,19 @@ const ResizeDialog: React.FunctionComponent = () => {
         }
     })
 
-    const changeState = (type: string, newState: any) => {
-        switch(type) {
-            case "resize":
-                setState((prev) => {
-                    return {...prev, width: newState.width, height: newState.height}
-                })
-                window.ipcRenderer.invoke("apply-resize", {...state, width: newState.width, height: newState.height, percent: state.percent, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "resize", JSON.stringify(newState))
-                break
-        }
-    }
+    useEffect(() => {
+        window.ipcRenderer.invoke("resize", {width, height, percent, realTime: true})
+    }, [width, height, percent])
 
     const closeAndReset = async (noRevert?: boolean) => {
         if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
         await window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
+        setWidth(0)
+        setHeight(0)
+        setOriginalWidth(0)
+        setOriginalHeight(0)
+        setLink(true)
+        setPercent(false)
     }
     
     const close = () => {
@@ -103,59 +104,60 @@ const ResizeDialog: React.FunctionComponent = () => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-                window.ipcRenderer.invoke("apply-resize", state)
+                window.ipcRenderer.invoke("apply-resize", {width, height, percent})
         }
+        window.ipcRenderer.invoke("save-temp", "resize", JSON.stringify({width, height, percent}))
         closeAndReset(button === "accept")
     }
 
     const changeWidth = (value?: number | string, newLink?: boolean) => {
-        const width = value !== undefined ? Number(value) : state.width
-        if (Number.isNaN(Number(width))) return
-        let height = state.height
-        const link = newLink !== undefined ? newLink : state.link
-        if (link) {
-            const ratio = (Number(width) / state.originalWidth)
-            height = Math.round(Number(state.originalHeight) * ratio)
+        const newWidth = value !== undefined ? Number(value) : width
+        if (Number.isNaN(Number(newWidth))) return
+        let newHeight = height
+        const isLinked = newLink !== undefined ? newLink : link
+        if (isLinked) {
+            const ratio = (Number(newWidth) / originalWidth)
+            newHeight = Math.round(Number(originalHeight) * ratio)
         }
-        changeState("resize", {width, height})
+        setWidth(newWidth)
+        setHeight(newHeight)
     }
 
     const changeHeight = (value?: number | string, newLink?: boolean) => {
-        const height = value !== undefined ? Number(value) : state.height
+        const newHeight = value !== undefined ? Number(value) : height
         if (Number.isNaN(Number(height))) return
-        const link = newLink !== undefined ? newLink : state.link
-        if (link) {
+        const isLinked = newLink !== undefined ? newLink : link
+        if (isLinked) {
             return
         } else {
-            const width = state.width
-            changeState("resize", {width, height})
+            const newWidth = width
+            setWidth(newWidth)
+            setHeight(newHeight)
         }
     }
 
     const changeLink = () => {
-        const newLink = !state.link
-        setState((prev) => {
-            return {...prev, link: newLink}
-        })
+        const newLink = !link
+        setLink(newLink)
         changeWidth(undefined, newLink)
         changeHeight(undefined, newLink)
     }
 
     const widthKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "ArrowUp") {
-            changeWidth(state.width + 1)
+            setWidth((prev) => prev + 1)
         } else if (event.key === "ArrowDown") {
-            if (state.width - 1 < 0) return
-            changeWidth(state.width - 1)
+            if (width - 1 < 0) return
+            setWidth((prev) => prev - 1)
         }
     }
 
     const heightKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "ArrowUp") {
-            changeHeight(state.height + 1)
+            setHeight((prev) => prev + 1)
         } else if (event.key === "ArrowDown") {
-            if (state.height - 1 < 0) return
-            changeHeight(state.height - 1)
+            if (height - 1 < 0) return
+            setHeight((prev) => prev - 1)
         }
     }
 
@@ -168,18 +170,20 @@ const ResizeDialog: React.FunctionComponent = () => {
                         <p className="dialog-title">Resize</p>
                     </div>
                     <div className="dialog-row-container" style={{gap: "7px"}}>
-                        <div className="dialog-row">
-                            <p className="dialog-text">Width{state.percent ? " %" : ""}: </p>
-                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeWidth(event.target.value)} value={state.width} onKeyDown={widthKey}/>
+                        <div className="dialog-row" style={{justifyContent: "center"}}>
+                            <p className="dialog-text">Width{percent ? " %" : ""}: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" 
+                            onChange={(event) => changeWidth(event.target.value)} value={width} onKeyDown={widthKey}/>
                         </div>
-                        <div className="dialog-row">
-                            <p className="dialog-text">Height{state.percent ? " %" : ""}: </p>
-                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeHeight(event.target.value)} value={state.height} onKeyDown={heightKey}/>
+                        <div className="dialog-row" style={{justifyContent: "center"}}>
+                            <p className="dialog-text">Height{percent ? " %" : ""}: </p>
+                            <input className="dialog-input" type="text" spellCheck="false" 
+                            onChange={(event) => changeHeight(event.target.value)} value={height} onKeyDown={heightKey}/>
                         </div>
                         <div className="resize-chain-container">
-                            <ChainTopIcon className="resize-chain-top" style={state.link ? {opacity: 1} : {opacity: 0}}/>
+                            <ChainTopIcon className="resize-chain-top" style={link ? {opacity: 1} : {opacity: 0}}/>
                             <ChainIcon className="resize-chain" onClick={changeLink}/>
-                            <ChainBottomIcon className="resize-chain-bottom" style={state.link ? {opacity: 1} : {opacity: 0}}/>
+                            <ChainBottomIcon className="resize-chain-bottom" style={link ? {opacity: 1} : {opacity: 0}}/>
                         </div>
                     </div>
                     <div className="dialog-button-container">

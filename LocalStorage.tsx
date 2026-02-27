@@ -33,11 +33,19 @@ const LocalStorage: React.FunctionComponent = () => {
     const {setTheme, setOS, setTransparent, setPinned} = useThemeActions()
     const {imageDrag} = useActiveSelector()
     const {setImageDrag} = useActiveActions()
-    const {setPixelate} = useFilterActions()
+    const {setBrightness, setContrast, setHue, setSaturation, 
+    setLightness, setBlur, setSharpen, setPixelate} = useFilterActions()
 
 
     useEffect(() => {
         const syncState = (event: any, state: ReduxState) => {
+            if (state.brightness !== undefined) setBrightness(state.brightness)
+            if (state.contrast !== undefined) setContrast(state.contrast)
+            if (state.hue !== undefined) setHue(state.hue)
+            if (state.saturation !== undefined) setSaturation(state.saturation)
+            if (state.lightness !== undefined) setLightness(state.lightness)
+            if (state.blur !== undefined) setBlur(state.blur)
+            if (state.sharpen !== undefined) setSharpen(state.sharpen)
             if (state.pixelate !== undefined) setPixelate(state.pixelate)
         }
         window.ipcRenderer.on("sync-redux-state", syncState)

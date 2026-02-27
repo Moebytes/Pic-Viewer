@@ -57,11 +57,9 @@ const PixelateDialog: React.FunctionComponent = () => {
 
     useEffect(() => {
         window.ipcRenderer.send("sync-redux-state", {pixelate})
-        window.ipcRenderer.invoke("save-temp", "pixelate", String(pixelate))
     }, [pixelate])
 
     const closeAndReset = async () => {
-        window.ipcRenderer.send("sync-redux-state", {pixelate: 1})
         await window.ipcRenderer.invoke("close-current-dialog")
     }
     
@@ -74,8 +72,10 @@ const PixelateDialog: React.FunctionComponent = () => {
     const click = async (button: "accept" | "reject") => {
         if (button === "accept") {
             window.ipcRenderer.invoke("apply-pixelate", {pixelate})
-            await functions.timeout(300)
+        } else {  
+            window.ipcRenderer.send("sync-redux-state", {pixelate: 1})
         }
+        window.ipcRenderer.invoke("save-temp", "pixelate", String(pixelate))
         closeAndReset()
     }
 
@@ -90,7 +90,7 @@ const PixelateDialog: React.FunctionComponent = () => {
                     <div className="dialog-row-container">
                         <div className="dialog-row">
                             <p className="dialog-text">Strength: </p>
-                            <Slider className="dialog-slider" onChange={(value) => setPixelate(value as number)} min={1} max={10} 
+                            <Slider className="dialog-slider" onChange={(value) => setPixelate(value as number)} min={1} max={15} 
                             step={0.1} value={pixelate}/>
                         </div>
                     </div>

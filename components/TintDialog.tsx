@@ -4,15 +4,12 @@ import functions from "../structures/functions"
 import "./styles/dialog.less"
 
 const TintDialog: React.FunctionComponent = () => {
-    const initialState = {
-        tint: "#ffffff"
-    }
-    const [state, setState] = useState(initialState)
+    const [tint, setTint] = useState("#ffffff")
     const [hover, setHover] = useState(false)
     const [clickCounter, setClickCounter] = useState(2)
 
     useEffect(() => {
-        setTimeout(() => {window.ipcRenderer.invoke("apply-tint", {...state, realTime: true})}, 100)
+        setTimeout(() => {window.ipcRenderer.invoke("apply-tint", {tint, realTime: true})}, 100)
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
             const transparent = await window.ipcRenderer.invoke("get-transparent")
@@ -22,7 +19,7 @@ const TintDialog: React.FunctionComponent = () => {
         initTheme()
         const savedValues = async () => {
             const savedTint = await window.ipcRenderer.invoke("get-temp", "tint")
-            if (savedTint) changeState("tint", Number(savedTint))
+            if (savedTint) setTint(savedTint)
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparent: boolean) => {
@@ -59,22 +56,14 @@ const TintDialog: React.FunctionComponent = () => {
         }
     })
 
-    const changeState = (type: string, value: any) => {
-        switch(type) {
-            case "tint":
-                setState((prev) => {
-                    return {...prev, tint: value}
-                })
-                window.ipcRenderer.invoke("apply-tint", {...state, tint: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "tint", String(value))
-                break
-        }
-    }
+    useEffect(() => {
+        window.ipcRenderer.invoke("tint", {tint, realTime: true})
+    }, [tint])
 
     const closeAndReset = async (noRevert?: boolean) => {
         if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
         await window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
+        setTint("#ffffff")
     }
     
     const close = () => {
@@ -85,8 +74,9 @@ const TintDialog: React.FunctionComponent = () => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            window.ipcRenderer.invoke("apply-tint", state)
+            window.ipcRenderer.invoke("apply-tint", {tint})
         }
+        window.ipcRenderer.invoke("save-temp", "tint", String(tint))
         closeAndReset(button === "accept")
     }
 
@@ -101,7 +91,8 @@ const TintDialog: React.FunctionComponent = () => {
                     <div className="dialog-row-container">
                         <div className="dialog-row">
                             <p className="dialog-text">Color: </p>
-                            <input className="tint-color-box" type="color" onChange={(event) => changeState("tint", event.target.value)} onClick={() => setClickCounter(0)} value={state.tint}></input>
+                            <input className="tint-color-box" type="color" onChange={(event) => setTint(event.target.value)} 
+                            onClick={() => setClickCounter(0)} value={tint}></input>
                         </div>
                     </div>
                     <div className="dialog-button-container">

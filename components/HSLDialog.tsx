@@ -4,15 +4,11 @@ import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
 import "./styles/dialog.less"
 
-const HSLDialog: React.FunctionComponent = (props) => {
-    const initialState = {
-        hue: 0,
-        saturation: 1,
-        lightness: 0
-    }
-    const [state, setState] = useState(initialState)
+const HSLDialog: React.FunctionComponent = () => {
+    const [hue, setHue] = useState(180)
+    const [saturation, setSaturation] = useState(100)
+    const [lightness, setLightness] = useState(0)
     const [hover, setHover] = useState(false)
-
 
     useEffect(() => {
         const initTheme = async () => {
@@ -23,12 +19,12 @@ const HSLDialog: React.FunctionComponent = (props) => {
         }
         initTheme()
         const savedValues = async () => {
+            const savedLightness = await window.ipcRenderer.invoke("get-temp", "lightness")
             const savedHue = await window.ipcRenderer.invoke("get-temp", "hue")
             const savedSaturation = await window.ipcRenderer.invoke("get-temp", "saturation")
-            const savedLightness = await window.ipcRenderer.invoke("get-temp", "lightness")
-            if (savedHue) changeState("hue", Number(savedHue))
-            if (savedSaturation) changeState("saturation", Number(savedSaturation))
-            if (savedLightness) changeState("lightness", Number(savedLightness))
+            if (savedHue) setHue(Number(savedHue))
+            if (savedSaturation) setSaturation(Number(savedSaturation))
+            if (savedLightness) setLightness(Number(savedLightness))
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparent: boolean) => {
@@ -65,36 +61,17 @@ const HSLDialog: React.FunctionComponent = (props) => {
         }
     })
 
-    const changeState = (type: string, value: number) => {
-        switch(type) {
-            case "hue":
-                setState((prev) => {
-                    return {...prev, hue: value}
-                })
-                window.ipcRenderer.invoke("apply-hsl", {...state, hue: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "hue", String(value))
-                break
-            case "saturation":
-                setState((prev) => {
-                    return {...prev, saturation: value}
-                })
-                window.ipcRenderer.invoke("apply-hsl", {...state, saturation: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "saturation", String(value))
-                break
-            case "lightness":
-                setState((prev) => {
-                    return {...prev, lightness: value}
-                })
-                window.ipcRenderer.invoke("apply-hsl", {...state, lightness: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "lightness", String(value))
-                break
-        }
-    }
+    useEffect(() => {
+        window.ipcRenderer.send("sync-redux-state", {hue, saturation, lightness})
+    }, [hue, saturation, lightness])
+
+    useEffect(() => {
+        window.ipcRenderer.invoke("hsl", {hue: 0, saturation: 1, lightness, realTime: true})
+    }, [lightness])
 
     const closeAndReset = async (noRevert?: boolean) => {
         if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
         await window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
     }
     
     const close = () => {
@@ -103,10 +80,15 @@ const HSLDialog: React.FunctionComponent = (props) => {
         }, 100)
     }
 
-    const click = (button: "accept" | "reject") => {
+    const click = async (button: "accept" | "reject") => {
         if (button === "accept") {
-            window.ipcRenderer.invoke("apply-hsl", state)
+            window.ipcRenderer.invoke("apply-hsl", {hue, saturation, lightness})
+        } else {  
+            window.ipcRenderer.send("sync-redux-state", {hue: 180, saturation: 100, lightness: 0})
         }
+        window.ipcRenderer.invoke("save-temp", "hue", String(hue))
+        window.ipcRenderer.invoke("save-temp", "saturation", String(saturation))
+        window.ipcRenderer.invoke("save-temp", "lightness", String(lightness))
         closeAndReset(button === "accept")
     }
 
@@ -121,15 +103,15 @@ const HSLDialog: React.FunctionComponent = (props) => {
                     <div className="dialog-row-container">
                         <div className="dialog-row">
                             <p className="dialog-text">Hue: </p>
-                            <Slider className="dialog-slider" onChange={(value) => {changeState("hue", value as number)}} min={-180} max={180} step={1} value={state.hue}/>
+                            <Slider className="dialog-slider" onChange={(value) => setHue(value as number)} min={0} max={360} step={1} value={hue}/>
                         </div>
                         <div className="dialog-row">
                             <p className="dialog-text">Saturation: </p>
-                            <Slider className="dialog-slider" onChange={(value) => {changeState("saturation", value as number)}} min={0.5} max={1.5} step={0.1} value={state.saturation}/>
+                            <Slider className="dialog-slider" onChange={(value) => setSaturation(value as number)} min={0} max={200} step={1} value={saturation}/>
                         </div>
                         <div className="dialog-row">
                             <p className="dialog-text">Lightness: </p>
-                            <Slider className="dialog-slider" onChange={(value) => {changeState("lightness", value as number)}} min={-100} max={100} step={1} value={state.lightness}/>
+                            <Slider className="dialog-slider" onChange={(value) => setLightness(value as number)} min={-100} max={100} step={1} value={lightness}/>
                         </div>
                     </div>
                     <div className="dialog-button-container">

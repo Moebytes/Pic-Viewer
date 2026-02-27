@@ -5,22 +5,18 @@ import CheckboxIcon from "../assets/svg/checkbox.svg"
 import CheckboxCheckedIcon from "../assets/svg/checkbox-checked.svg"
 import "./styles/dialog.less"
 
-const GIFDialog: React.FunctionComponent = (props) => {
-    const initialState = {
-        speed: 1,
-        reverse: false,
-        transparency: false,
-        transparentColor: "#000000"
-    }
-    const [state, setState] = useState(initialState)
+const GIFDialog: React.FunctionComponent = (prps) => {
+    const [speed, setSpeed] = useState(1)
+    const [reverse, setReverse] = useState(false)
+    const [transparency, setTransparency] = useState(false)
+    const [transparentColor, setTransparentColor] = useState("#000000")
     const [hover, setHover] = useState(false)
     const [clickCounter, setClickCounter] = useState(2)
 
     useEffect(() => {
         window.ipcRenderer.invoke("get-gif-options").then((options) => {
-            setState((prev) => {
-                return {...prev, transparency: options.transparency, transparentColor: options.transparentColor}
-            })
+            setTransparency(options.transparency)
+            setTransparentColor(options.transparentColor)
         })
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
@@ -34,10 +30,10 @@ const GIFDialog: React.FunctionComponent = (props) => {
             const savedReverse = await window.ipcRenderer.invoke("get-temp", "reverse")
             const savedTransparency = await window.ipcRenderer.invoke("get-temp", "transparency")
             const savedTransparentColor = await window.ipcRenderer.invoke("get-temp", "transparentColor")
-            if (savedSpeed) changeState("speed", Number(savedSpeed))
-            if (savedReverse) changeState("reverse", savedReverse === "true")
-            if (savedTransparency) changeState("transparency", savedTransparency === "true")
-            if (savedTransparentColor) changeState("transparentColor", savedTransparentColor)
+            if (savedSpeed) setSpeed(Number(savedSpeed))
+            if (savedReverse) setReverse(savedReverse === "true")
+            if (savedTransparency) setTransparency(savedTransparency === "true")
+            if (savedTransparentColor) setTransparentColor(savedTransparentColor)
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparent: boolean) => {
@@ -79,44 +75,18 @@ const GIFDialog: React.FunctionComponent = (props) => {
         }
     })
 
-    const changeState = (type: string, value: any) => {
-        switch(type) {
-            case "speed":
-                setState((prev) => {
-                    return {...prev, speed: value}
-                })
-                window.ipcRenderer.invoke("save-temp", "speed", String(value))
-                break
-            case "reverse":
-                setState((prev) => {
-                    return {...prev, reverse: value}
-                })
-                window.ipcRenderer.invoke("save-temp", "reverse", String(value))
-                break
-            case "transparency":
-                setState((prev) => {
-                    return {...prev, transparency: value}
-                })
-                window.ipcRenderer.invoke("save-temp", "transparency", String(value))
-                break
-            case "transparentColor":
-                setState((prev) => {
-                    return {...prev, transparentColor: value}
-                })
-                window.ipcRenderer.invoke("save-temp", "transparentColor", String(value))
-                break
-        }
-    }
-
     const closeAndReset = () => {
         window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
+        setSpeed(1)
+        setReverse(false)
+        setTransparency(false)
+        setTransparentColor("#000000")
     }
     
     const close = () => {
         setTimeout(() => {
             if (!hover && clickCounter > 1) {
-                window.ipcRenderer.invoke("set-gif-options", state)
+                window.ipcRenderer.invoke("set-gif-options", {speed, reverse, transparency, transparentColor})
                 closeAndReset()
             }
         }, 100)
@@ -124,20 +94,24 @@ const GIFDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            window.ipcRenderer.invoke("gif-effects", state)
+            window.ipcRenderer.invoke("gif-effects", {speed, reverse, transparency, transparentColor})
         }
-        window.ipcRenderer.invoke("set-gif-options", state)
+        window.ipcRenderer.invoke("set-gif-options", {speed, reverse, transparency, transparentColor})
+        window.ipcRenderer.invoke("save-temp", "speed", String(speed))
+        window.ipcRenderer.invoke("save-temp", "reverse", String(reverse))
+        window.ipcRenderer.invoke("save-temp", "transparency", String(transparency))
+        window.ipcRenderer.invoke("save-temp", "transparentColor", String(transparentColor))
         closeAndReset()
     }
 
     const speedKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "ArrowUp") {
-            let speed = Number(state.speed) + 1
-            changeState("speed", speed)
+            let newSpeed = Number(speed) + 1
+            setSpeed(newSpeed)
         } else if (event.key === "ArrowDown") {
-            let speed = Number(state.speed) - 1
-            if (speed < 0.1) speed = 0.1
-            changeState("speed", speed)
+            let newSpeed = Number(speed) - 1
+            if (newSpeed < 0.1) newSpeed = 0.1
+            setSpeed(newSpeed)
         }
     }
 
@@ -152,27 +126,27 @@ const GIFDialog: React.FunctionComponent = (props) => {
                     <div className="dialog-row-container">
                         <div className="dialog-row-start" style={{gap: "20px"}}>
                             <p className="dialog-text">Speed: </p>
-                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("speed", event.target.value)} value={state.speed} onKeyDown={speedKey}/>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => setSpeed(Number(event.target.value))} value={speed} onKeyDown={speedKey}/>
                         </div>
                         <div className="dialog-row-start" style={{gap: "20px"}}>
                             <p className="dialog-text">Reverse: </p>
                             <div className="gif-checkbox-container">
-                                {state.reverse ?
-                                <CheckboxCheckedIcon className="gif-checkbox" onClick={() => changeState("reverse", !state.reverse)}/> : 
-                                <CheckboxIcon className="gif-checkbox" onClick={() => changeState("reverse", !state.reverse)}/>}
+                                {reverse ?
+                                <CheckboxCheckedIcon className="gif-checkbox" onClick={() => setReverse((prev) => !prev)}/> : 
+                                <CheckboxIcon className="gif-checkbox" onClick={() => setReverse((prev) => !prev)}/>}
                             </div>
                         </div>
                         <div className="dialog-row-start" style={{gap: "20px"}}>
                             <p className="dialog-text">Transparency: </p>
                             <div className="gif-checkbox-container">
-                                {state.transparency ?
-                                <CheckboxCheckedIcon className="gif-checkbox" onClick={() => changeState("transparency", !state.transparency)}/> : 
-                                <CheckboxIcon className="gif-checkbox" onClick={() => changeState("transparency", !state.transparency)}/>}
+                                {transparency ?
+                                <CheckboxCheckedIcon className="gif-checkbox" onClick={() => setTransparency((prev) => !prev)}/> : 
+                                <CheckboxIcon className="gif-checkbox" onClick={() => setTransparency((prev) => !prev)}/>}
                             </div>
                         </div>
                         <div className="dialog-row-start" style={{gap: "20px"}}>
                             <p className="dialog-text">Transparent Color: </p>   
-                            <input type="color" className="gif-color-box" onChange={(event) => changeState("transparentColor", event.target.value)} onClick={() => setClickCounter(0)} value={state.transparentColor}></input>
+                            <input type="color" className="gif-color-box" onChange={(event) => setTransparentColor(event.target.value)} onClick={() => setClickCounter(0)} value={transparentColor}></input>
                         </div>
                     </div>
                     <div className="dialog-button-container">

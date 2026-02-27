@@ -6,20 +6,17 @@ import "./styles/dialog.less"
 const InfoDialog: React.FunctionComponent = () => {
     const {infoDialogActive} = useActiveSelector()
     const {setHover: setHoverCtx, setInfoDialogActive} = useActiveActions()
-    const initialState = {
-        name: null,
-        width: 0,
-        height: 0,
-        format: null,
-        size: 0 as any,
-        dpi: 0,
-        frames: 0,
-        space: null,
-        bitDepth: 0,
-        progressive: false,
-        alpha: false
-    }
-    const [state, setState] = useState(initialState)
+    const [name, setName] = useState(null)
+    const [width, setWidth] = useState(0)
+    const [height, setHeight] = useState(0)
+    const [format, setFormat] = useState(null)
+    const [size, setSize] = useState(0)
+    const [dpi, setDPI] = useState(0)
+    const [frames, setFrames] = useState(0)
+    const [space, setSpace] = useState(null)
+    const [bitDepth, setBitDepth] = useState(0)
+    const [progressive, setProgressive] = useState(false)
+    const [alpha, setAlpha] = useState(false)
     const [hover, setHover] = useState(false)
 
     useEffect(() => {
@@ -29,17 +26,29 @@ const InfoDialog: React.FunctionComponent = () => {
                 const image = functions.imageAtCursor(coords)
                 const i = info.findIndex((i: any) => functions.pathEqual(i.image, image))
                 if (i === -1) return close()
-                setState((prev) => {
-                    return {...prev, name: info[i].name, width: info[i].width, height: info[i].height, format: info[i].format, 
-                    size: info[i].size, dpi: info[i].dpi, frames: info[i].frames, space: info[i].space, bitDepth: info[i].bitDepth,
-                    progressive: info[i].progressive, alpha: info[i].alpha}
-                })
+                setName(info[i].name)
+                setWidth(info[i].width)
+                setHeight(info[i].height)
+                setFormat(info[i].format)
+                setSize(info[i].size)
+                setDPI(info[i].dpi)
+                setFrames(info[i].frames)
+                setSpace(info[i].space)
+                setBitDepth(info[i].bitDepth)
+                setProgressive(info[i].progressive)
+                setAlpha(info[i].alpha)
             } else {
-                setState((prev) => {
-                    return {...prev, name: info[0].name, width: info[0].width, height: info[0].height, format: info[0].format, 
-                    size: info[0].size, dpi: info[0].dpi, frames: info[0].frames, space: info[0].space, bitDepth: info[0].bitDepth,
-                    progressive: info[0].progressive, alpha: info[0].alpha}
-                })
+                setName(info[0].name)
+                setWidth(info[0].width)
+                setHeight(info[0].height)
+                setFormat(info[0].format)
+                setSize(info[0].size)
+                setDPI(info[0].dpi)
+                setFrames(info[0].frames)
+                setSpace(info[0].space)
+                setBitDepth(info[0].bitDepth)
+                setProgressive(info[0].progressive)
+                setAlpha(info[0].alpha)
             }
             setInfoDialogActive(true)
             
@@ -58,14 +67,26 @@ const InfoDialog: React.FunctionComponent = () => {
     const close = () => {
         if (!hover) {
             setInfoDialogActive(false)
-            setState(initialState)
+            setName(null)
+            setWidth(0)
+            setHeight(0)
+            setFormat(null)
+            setSize(0)
+            setDPI(0)
+            setFrames(0)
+            setSpace(null)
+            setBitDepth(0)
+            setProgressive(false)
+            setAlpha(false)
         }
     }
 
     if (infoDialogActive) {
         return (
-            <section className="dialog" style={{pointerEvents: "auto"}} onMouseDown={close} onMouseEnter={() => setHoverCtx(false)} onMouseLeave={() => setHoverCtx(true)}>
-                <div className="dialog-box" style={{position: "relative", width: "max-content", height: "max-content"}} onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+            <section className="dialog" style={{pointerEvents: "auto"}} onMouseDown={close} onMouseEnter={() => setHoverCtx(false)} 
+            onMouseLeave={() => setHoverCtx(true)}>
+                <div className="dialog-box" style={{position: "relative", width: "max-content", height: "max-content"}} 
+                onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                     <div className="dialog-container">
                         <div className="dialog-title-container">
                             <p className="dialog-title">Image Info</p>
@@ -73,47 +94,47 @@ const InfoDialog: React.FunctionComponent = () => {
                         <div className="dialog-row-container">
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Name: </p>
-                                <p className="dialog-text-alt">{state.name}</p>
+                                <p className="dialog-text-alt">{name}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Width: </p>
-                                <p className="dialog-text-alt">{state.width}</p>
+                                <p className="dialog-text-alt">{width}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Height: </p>
-                                <p className="dialog-text-alt">{state.height}</p>
+                                <p className="dialog-text-alt">{height}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">DPI: </p>
-                                <p className="dialog-text-alt">{state.dpi}</p>
+                                <p className="dialog-text-alt">{dpi}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Bit Depth: </p>
-                                <p className="dialog-text-alt">{state.bitDepth ?? "?"}</p>
+                                <p className="dialog-text-alt">{bitDepth ?? "?"}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Size: </p>
-                                <p className="dialog-text-alt">{state.size === "?" ? "?" : functions.readableFileSize(state.size)}</p>
+                                <p className="dialog-text-alt">{String(size) === "?" ? "?" : functions.readableFileSize(size)}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Format: </p>
-                                <p className="dialog-text-alt">{state.format}</p>
+                                <p className="dialog-text-alt">{format}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Progressive: </p>
-                                <p className="dialog-text-alt">{state.progressive ? "Yes" : "No"}</p>
+                                <p className="dialog-text-alt">{progressive ? "Yes" : "No"}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Alpha: </p>
-                                <p className="dialog-text-alt">{state.alpha ? "Yes" : "No"}</p>
+                                <p className="dialog-text-alt">{alpha ? "Yes" : "No"}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Frames: </p>
-                                <p className="dialog-text-alt">{state.frames}</p>
+                                <p className="dialog-text-alt">{frames}</p>
                             </div>
                             <div className="dialog-row-start">
                                 <p className="dialog-text-big">Color Space: </p>
-                                <p className="dialog-text-alt">{state.space}</p>
+                                <p className="dialog-text-alt">{space}</p>
                             </div>
                         </div>
                     </div>

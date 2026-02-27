@@ -6,6 +6,7 @@ const LinkDialog: React.FunctionComponent = (props) => {
     const [visible, setVisible] = useState(false)
     const [hover, setHover] = useState(false)
     const searchBox = useRef<HTMLInputElement>(null)
+    
     useEffect(() => {
         const showLinkDialog = (event: any) => {
             setVisible((prev) => !prev)

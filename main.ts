@@ -842,7 +842,7 @@ ipcMain.handle("show-tint-dialog", async (event) => {
 })
 
 ipcMain.handle("hsl", async (event, state: any) => {
-  const {hue, saturation, lightness, realTime} = state
+  const {hue, saturation, lightness, realTime, noHistory} = state
   let images = historyStates[historyIndex] as any
   if (!images) return null
   let imgArray = [] as any[]
@@ -878,6 +878,7 @@ ipcMain.handle("hsl", async (event, state: any) => {
     window?.webContents.send("update-images", imgArray) 
     return null
   }
+  if (noHistory) return imgArray
   updateHistoryState(imgArray)
   return imgArray
 })
@@ -1297,6 +1298,9 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
       event.sender.send("close-all-dialogs", "info")
       event.sender.send("show-info-dialog", {x, y})
     }},
+    {label: "Reset Values", click: () => {
+      tempStore = {}
+    }},
     {label: "Lock Aspect Ratio", click: () => {
       let images = historyStates[historyIndex] as any
       if (images?.[0]) resizeWindow(images[0])
@@ -1307,10 +1311,7 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
     {label: "Toggle Fullscreen", click: () => event.sender.send("fullscreen")},
     {type: "separator"},
     {label: "Save Image", click: () => event.sender.send("save-img")},
-    {label: "Copy Address", click: () => event.sender.send("copy-address", {x, y})},
-    {label: "Clear Cache", click: () => {
-      tempStore = {}
-    }}
+    {label: "Copy Address", click: () => event.sender.send("copy-address", {x, y})}
   ]
 
   const menu = Menu.buildFromTemplate(template)
@@ -1324,30 +1325,22 @@ const applicationMenu = () =>  {
     {
       label: "File",
       submenu: [
-        {
-          label: "Open", 
-          accelerator: "CmdOrCtrl+O",
+        {label: "Open", accelerator: "CmdOrCtrl+O",
           click: (item, window) => {
             const win = window as BrowserWindow
             win.webContents.send("upload-file")
-          }
-        },
-        {
-          label: "Save",
-          accelerator: "CmdOrCtrl+S",
+        }},
+        {label: "Save", accelerator: "CmdOrCtrl+S",
           click: (item, window) => {
             const win = window as BrowserWindow
             win?.webContents.send("save-img")
-          }
-        }
+        }}
       ]
     },
     {
       label: "Edit",
       submenu: [
-        {
-          label: "Copy", 
-          accelerator: "CmdOrCtrl+C",
+        {label: "Copy", accelerator: "CmdOrCtrl+C",
           click: (item, window) => {
             const win = window as BrowserWindow
             const cursor = screen.getCursorScreenPoint()
@@ -1355,75 +1348,56 @@ const applicationMenu = () =>  {
             const x = cursor.x - winX
             const y = cursor.y - winY
             win.webContents.send("copy-image", {x, y})
-          }
-        },
-        {
-          label: "Paste",
-          accelerator: "CmdOrCtrl+V",
+        }},
+        {label: "Paste", accelerator: "CmdOrCtrl+V",
           click: (item, window) => {
             const win = window as BrowserWindow
             win?.webContents.send("trigger-paste")
-          }
-        },
+        }},
         {type: "separator"},
-        {
-          label: "Undo", 
-          accelerator: "CmdOrCtrl+Z",
+        {label: "Undo", accelerator: "CmdOrCtrl+Z",
           click: (item, window) => {
             const win = window as BrowserWindow
             win.webContents.send("trigger-undo")
-          }
-        },
-        {
-          label: "Redo",
-          accelerator: "CmdOrCtrl+Shift+Z",
+        }},
+        {label: "Redo", accelerator: "CmdOrCtrl+Shift+Z",
           click: (item, window) => {
             const win = window as BrowserWindow
             win?.webContents.send("trigger-redo")
-          }
-        }
+        }},
+        {label: "Reset Values", click: () => {
+          tempStore = {}
+        }}
       ]
     },
     {
       label: "View",
       submenu: [
-        {
-          label: "Zoom In", 
-          accelerator: "CmdOrCtrl+=",
+        {label: "Zoom In", accelerator: "CmdOrCtrl+=",
           click: (item, window) => {
             const win = window as BrowserWindow
             win.webContents.send("zoom-in")
-          }
-        },
-        {
-          label: "Zoom Out",
-          accelerator: "CmdOrCtrl+-",
+        }},
+        {label: "Zoom Out", accelerator: "CmdOrCtrl+-",
           click: (item, window) => {
             const win = window as BrowserWindow
             win?.webContents.send("zoom-out")
-          }
-        },
-        {
-          label: "Lock Aspect Ratio",
+        }},
+        {label: "Lock Aspect Ratio",
           click: () => {
             let images = historyStates[historyIndex] as any
             if (images?.[0]) resizeWindow(images[0])
-          }
-        },
-        {
-          label: "Unlock Aspect Ratio",
+        }},
+        {label: "Unlock Aspect Ratio",
           click: (item, window) => {
             const win = window as BrowserWindow
             win.setAspectRatio(0)
-          }
-        },
-        {
-          label: "Toggle Fullscreen",
+        }},
+        {label: "Toggle Fullscreen",
           click: (item, window) => {
             const win = window as BrowserWindow
             win?.webContents.send("fullscreen")
-          }
-        }
+        }}
       ]
     },
     {role: "windowMenu"},

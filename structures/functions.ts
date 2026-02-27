@@ -6,6 +6,13 @@ import path from "path"
 import {lightColorList, darkColorList} from "../LocalStorage"
 
 export interface ReduxState {
+    brightness: number
+    contrast: number
+    hue: number
+    saturation: number
+    lightness: number
+    blur: number
+    sharpen: number
     pixelate: number
 }
 
@@ -280,13 +287,22 @@ export default class Functions {
 
     public static render = (image: HTMLImageElement, container: HTMLDivElement, state: ReduxState) => {
         if (!image || !container) return ""
-        let {pixelate} = state
+        let brightness = state.brightness ?? 100
+        let contrast = state.contrast ?? 100
+        let hue = state.hue ?? 180
+        let saturation = state.saturation ?? 100
+        let blur = state.blur ?? 0
+        let pixelate = state.pixelate ?? 1
         const imageWidth = container.clientWidth
         const imageHeight = container.clientHeight
         const canvas = document.createElement("canvas") as HTMLCanvasElement
-        canvas.width = imageWidth
-        canvas.height = imageHeight
+        canvas.width = image.naturalWidth
+        canvas.height = image.naturalHeight
         const ctx = canvas.getContext("2d")!
+        const scaleX = image.naturalWidth / container.clientWidth
+        const scaleY = image.naturalHeight / container.clientHeight
+        const scale = Math.max(scaleX, scaleY)
+        ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) hue-rotate(${hue - 180}deg) saturate(${saturation}%) blur(${blur * scale}px)`
         ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
         if (pixelate !== 1) {
             const pixelateCanvas = document.createElement("canvas")

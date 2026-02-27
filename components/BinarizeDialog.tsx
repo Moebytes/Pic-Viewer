@@ -5,14 +5,11 @@ import functions from "../structures/functions"
 import "./styles/dialog.less"
 
 const BinarizeDialog: React.FunctionComponent = () => {
-    const initialState = {
-        binarize: 128
-    }
-    const [state, setState] = useState(initialState)
+    const [binarize, setBinarize] = useState(128)
     const [hover, setHover] = useState(false)
 
     useEffect(() => {
-        setTimeout(() => {window.ipcRenderer.invoke("apply-binarize", {...state, realTime: true})}, 100)
+        setTimeout(() => {window.ipcRenderer.invoke("apply-binarize", {binarize, realTime: true})}, 100)
         const initTheme = async () => {
             const theme = await window.ipcRenderer.invoke("get-theme")
             const transparent = await window.ipcRenderer.invoke("get-transparent")
@@ -22,7 +19,7 @@ const BinarizeDialog: React.FunctionComponent = () => {
         initTheme()
         const savedValues = async () => {
             const savedBinarize = await window.ipcRenderer.invoke("get-temp", "binarize")
-            if (savedBinarize) changeState("binarize", Number(savedBinarize))
+            if (savedBinarize) setBinarize(Number(savedBinarize))
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparent: boolean) => {
@@ -59,22 +56,14 @@ const BinarizeDialog: React.FunctionComponent = () => {
         }
     })
 
-    const changeState = (type: string, value: number) => {
-        switch(type) {
-            case "binarize":
-                setState((prev) => {
-                    return {...prev, binarize: value}
-                })
-                window.ipcRenderer.invoke("apply-binarize", {...state, binarize: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "binarize", String(value))
-                break
-        }
-    }
+    useEffect(() => {
+        window.ipcRenderer.invoke("binarize", {binarize, realTime: true})
+    }, [binarize])
 
     const closeAndReset = async (noRevert?: boolean) => {
         if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
         await window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
+        setBinarize(128)
     }
     
     const close = () => {
@@ -85,8 +74,9 @@ const BinarizeDialog: React.FunctionComponent = () => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            window.ipcRenderer.invoke("apply-binarize", state)
+            window.ipcRenderer.invoke("apply-binarize", {binarize})
         }
+        window.ipcRenderer.invoke("save-temp", "binarize", String(binarize))
         closeAndReset(button === "accept")
     }
 
@@ -101,7 +91,7 @@ const BinarizeDialog: React.FunctionComponent = () => {
                     <div className="dialog-row-container">
                         <div className="dialog-row">
                             <p className="dialog-text">Threshold: </p>
-                            <Slider className="dialog-slider" onChange={(value) => {changeState("binarize", value as number)}} min={1} max={255} step={1} value={state.binarize}/>
+                            <Slider className="dialog-slider" onChange={(value) => setBinarize(value as number)} min={1} max={255} step={1} value={binarize}/>
                         </div>
                     </div>
                     <div className="dialog-button-container">

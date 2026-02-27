@@ -3,14 +3,11 @@ import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
 import "./styles/dialog.less"
 
-const CropDialog: React.FunctionComponent = (props) => {
-    const initialState = {
-        x: 0 as any,
-        y: 0 as any,
-        width: 100 as any,
-        height: 100 as any
-    }
-    const [state, setState] = useState(initialState)
+const CropDialog: React.FunctionComponent = () => {
+    const [x, setX] = useState(0)
+    const [y, setY] = useState(0)
+    const [width, setWidth] = useState(0)
+    const [height, setHeight] = useState(0)
     const [hover, setHover] = useState(false)
 
     useEffect(() => {
@@ -26,10 +23,10 @@ const CropDialog: React.FunctionComponent = (props) => {
             const savedY = await window.ipcRenderer.invoke("get-temp", "y")
             const savedWidth = await window.ipcRenderer.invoke("get-temp", "width")
             const savedHeight = await window.ipcRenderer.invoke("get-temp", "height")
-            if (savedX) changeState("x", Number(savedX))
-            if (savedY) changeState("y", Number(savedY))
-            if (savedWidth) changeState("width", Number(savedWidth))
-            if (savedHeight) changeState("height", Number(savedHeight))
+            if (savedX) setX(Number(savedX))
+            if (savedY) setY(Number(savedY))
+            if (savedWidth) setWidth(Number(savedWidth))
+            if (savedHeight) setHeight(Number(savedHeight))
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparent: boolean) => {
@@ -66,43 +63,17 @@ const CropDialog: React.FunctionComponent = (props) => {
         }
     })
 
-    const changeState = (type: string, value: any) => {
-        switch(type) {
-            case "x":
-                setState((prev) => {
-                    return {...prev, x: value}
-                })
-                window.ipcRenderer.invoke("apply-crop", {...state, x: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "x", String(value))
-                break
-            case "y":
-                setState((prev) => {
-                    return {...prev, y: value}
-                })
-                window.ipcRenderer.invoke("apply-crop", {...state, y: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "y", String(value))
-                break
-            case "width":
-                setState((prev) => {
-                    return {...prev, width: value}
-                })
-                window.ipcRenderer.invoke("apply-crop", {...state, width: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "width", String(value))
-                break
-            case "height":
-                setState((prev) => {
-                    return {...prev, height: value}
-                })
-                window.ipcRenderer.invoke("apply-crop", {...state, height: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "height", String(value))
-                break
-        }
-    }
+    useEffect(() => {
+        window.ipcRenderer.invoke("crop", {x, y, width, height, realTime: true})
+    }, [x, y, width, height])
 
     const closeAndReset = async (noRevert?: boolean) => {
         if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
         await window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
+        setX(0)
+        setY(0)
+        setWidth(0)
+        setHeight(0)
     }
     
     const close = () => {
@@ -113,44 +84,48 @@ const CropDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-                window.ipcRenderer.invoke("apply-crop", state)
+                window.ipcRenderer.invoke("apply-crop", {x, y, width, height})
         }
+        window.ipcRenderer.invoke("save-temp", "x", String(x))
+        window.ipcRenderer.invoke("save-temp", "y", String(y))
+        window.ipcRenderer.invoke("save-temp", "width", String(width))
+        window.ipcRenderer.invoke("save-temp", "height", String(height))
         closeAndReset(button === "accept")
     }
 
     const xKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "ArrowUp") {
-            changeState("x", state.x + 1)
+            setX((prev) => prev + 1)
         } else if (event.key === "ArrowDown") {
-            if (state.width - 1 < 0) return
-            changeState("x", state.x - 1)
+            if (width - 1 < 0) return
+            setX((prev) => prev - 1)
         }
     }
 
     const yKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "ArrowUp") {
-            changeState("y", state.y + 1)
+            setY((prev) => prev + 1)
         } else if (event.key === "ArrowDown") {
-            if (state.width - 1 < 0) return
-            changeState("y", state.y - 1)
+            if (height - 1 < 0) return
+            setY((prev) => prev - 1)
         }
     }
 
     const widthKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "ArrowUp") {
-            changeState("width", state.width + 1)
+            setWidth((prev) => prev + 1)
         } else if (event.key === "ArrowDown") {
-            if (state.width - 1 < 0) return
-            changeState("width", state.width - 1)
+            if (width - 1 < 0) return
+            setWidth((prev) => prev - 1)
         }
     }
 
     const heightKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "ArrowUp") {
-            changeState("height", state.height + 1)
+            setHeight((prev) => prev + 1)
         } else if (event.key === "ArrowDown") {
-            if (state.height - 1 < 0) return
-            changeState("height", state.height - 1)
+            if (height - 1 < 0) return
+            setHeight((prev) => prev - 1)
         }
     }
 
@@ -165,19 +140,19 @@ const CropDialog: React.FunctionComponent = (props) => {
                     <div className="dialog-row-container">
                         <div className="dialog-row">
                             <p className="dialog-text">X %: </p>
-                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("x", event.target.value)} value={state.x} onKeyDown={xKey}/>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => setX(Number(event.target.value))} value={x} onKeyDown={xKey}/>
                         </div>
                         <div className="dialog-row">
                             <p className="dialog-text">Y %: </p>
-                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("y", event.target.value)} value={state.y} onKeyDown={yKey}/>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => setY(Number(event.target.value))} value={y} onKeyDown={yKey}/>
                         </div>
                         <div className="dialog-row">
                             <p className="dialog-text">Width %: </p>
-                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("width", event.target.value)} value={state.width} onKeyDown={widthKey}/>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => setWidth(Number(event.target.value))} value={width} onKeyDown={widthKey}/>
                         </div>
                         <div className="dialog-row">
                             <p className="dialog-text">Height %: </p>
-                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => changeState("height", event.target.value)} value={state.height} onKeyDown={heightKey}/>
+                            <input className="dialog-input" type="text" spellCheck="false" onChange={(event) => setHeight(Number(event.target.value))} value={height} onKeyDown={heightKey}/>
                         </div>
                     </div>
                     <div className="dialog-button-container">

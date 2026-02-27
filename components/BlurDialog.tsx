@@ -4,12 +4,9 @@ import {createRoot} from "react-dom/client"
 import functions from "../structures/functions"
 import "./styles/dialog.less"
 
-const BlurDialog: React.FunctionComponent = (props) => {
-    const initialState = {
-        blur: 0.3,
-        sharpen: 0.3
-    }
-    const [state, setState] = useState(initialState)
+const BlurDialog: React.FunctionComponent = () => {
+    const [blur, setBlur] = useState(0)
+    const [sharpen, setSharpen] = useState(0.1)
     const [hover, setHover] = useState(false)
 
     useEffect(() => {
@@ -21,10 +18,10 @@ const BlurDialog: React.FunctionComponent = (props) => {
         }
         initTheme()
         const savedValues = async () => {
-            const savedBlur= await window.ipcRenderer.invoke("get-temp", "blur")
+            const savedBlur = await window.ipcRenderer.invoke("get-temp", "blur")
             const savedSharpen = await window.ipcRenderer.invoke("get-temp", "sharpen")
-            if (savedBlur) changeState("blur", Number(savedBlur))
-            if (savedSharpen) changeState("sharpen", Number(savedSharpen))
+            if (savedBlur) setBlur(Number(savedBlur))
+            if (savedSharpen) setSharpen(Number(savedSharpen))
         }
         savedValues()
         const updateTheme = (event: any, theme: string, transparent: boolean) => {
@@ -61,29 +58,19 @@ const BlurDialog: React.FunctionComponent = (props) => {
         }
     })
 
-    const changeState = (type: string, value: number) => {
-        switch(type) {
-            case "blur":
-                setState((prev) => {
-                    return {...prev, blur: value}
-                })
-                window.ipcRenderer.invoke("apply-blur", {...state, blur: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "blur", String(value))
-                break
-            case "sharpen":
-                setState((prev) => {
-                    return {...prev, sharpen: value}
-                })
-                window.ipcRenderer.invoke("apply-blur", {...state, sharpen: value, realTime: true})
-                window.ipcRenderer.invoke("save-temp", "sharpen", String(value))
-                break
-        }
-    }
+    useEffect(() => {
+        window.ipcRenderer.send("sync-redux-state", {blur, sharpen})
+    }, [blur, sharpen])
+
+    useEffect(() => {
+        window.ipcRenderer.invoke("blur", {blur: 0.3, sharpen, realTime: true})
+    }, [sharpen])
 
     const closeAndReset = async (noRevert?: boolean) => {
         if (!noRevert) await window.ipcRenderer.invoke("revert-to-last-state")
         await window.ipcRenderer.invoke("close-current-dialog")
-        setState(initialState)
+        setBlur(0.3)
+        setSharpen(0.3)
     }
     
     const close = () => {
@@ -94,8 +81,12 @@ const BlurDialog: React.FunctionComponent = (props) => {
 
     const click = (button: "accept" | "reject") => {
         if (button === "accept") {
-            window.ipcRenderer.invoke("apply-blur", state)
+            window.ipcRenderer.invoke("apply-blur", {blur, sharpen})
+        } else {  
+            window.ipcRenderer.send("sync-redux-state", {blur: 0, sharpen: 0.3})
         }
+        window.ipcRenderer.invoke("save-temp", "blur", String(blur))
+        window.ipcRenderer.invoke("save-temp", "sharpen", String(sharpen))
         closeAndReset(button === "accept")
     }
 
@@ -110,11 +101,11 @@ const BlurDialog: React.FunctionComponent = (props) => {
                     <div className="dialog-row-container">
                         <div className="dialog-row">
                             <p className="dialog-text">Blur: </p>
-                            <Slider className="dialog-slider" onChange={(value) => {changeState("blur", value as number)}} min={0.3} max={15} step={0.1} value={state.blur}/>
+                            <Slider className="dialog-slider" onChange={(value) => setBlur(value as number)} min={0} max={15} step={0.1} value={blur}/>
                         </div>
                         <div className="dialog-row">
                             <p className="dialog-text">Sharpen: </p>
-                            <Slider className="dialog-slider" onChange={(value) => {changeState("sharpen", value as number)}} min={0.1} max={10} step={0.1} value={state.sharpen}/>
+                            <Slider className="dialog-slider" onChange={(value) => setSharpen(value as number)} min={0.1} max={10} step={0.1} value={sharpen}/>
                         </div>
                     </div>
                     <div className="dialog-button-container">
