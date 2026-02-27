@@ -393,6 +393,35 @@ const getMetadata = async (images: any, toBuffer?: boolean) => {
   return metaArray
 }
 
+ipcMain.handle("show-info-dialog", async (event: any, i: number) => {
+  let images = historyStates[historyIndex]
+  const metadata = await getMetadata(images)
+  if (!metadata) return
+
+  const detail = [
+    `Name: ${metadata[i].name}`,
+    `Width: ${metadata[i].width}`,
+    `Height: ${metadata[i].height}`,
+    `DPI: ${metadata[i].dpi}`,
+    `Bit Depth: ${metadata[i].bitDepth ?? "?"}`,
+    `Size: ${functions.readableFileSize(metadata[i].size)}`,
+    `Format: ${metadata[i].format}`,
+    `Progressive: ${metadata[i].progressive ? "Yes" : "No"}`,
+    `Alpha: ${metadata[i].alpha ? "Yes" : "No"}`,
+    `Frames: ${metadata[i].frames}`,
+    `Color Space: ${metadata[i].space}`
+  ].join("\n")
+
+  await dialog.showMessageBox(window!, {
+    type: "info",
+    title: "Image Info",
+    message: "Image Info",
+    detail,
+    buttons: ["Ok"],
+    noLink: true
+  })
+})
+
 ipcMain.handle("get-original-metadata", async () => {
   return getMetadata(originalImages, true)
 })
@@ -1295,7 +1324,6 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
     {label: "Paste", accelerator: "CmdOrCtrl+V", click: () => event.sender.send("trigger-paste")},
     {type: "separator"},
     {label: "Get Info", click: () => {
-      event.sender.send("close-all-dialogs", "info")
       event.sender.send("show-info-dialog", {x, y})
     }},
     {label: "Reset Values", click: () => {
