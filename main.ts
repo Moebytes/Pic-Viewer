@@ -16,6 +16,7 @@ let window: Electron.BrowserWindow | null
 let currentDialog: Electron.BrowserWindow | null
 
 const store = new Store()
+let initialTransparent = process.platform === "win32" ? store.get("transparent", false) as boolean : true
 let tempStore = {} as any
 let filePath = ""
 
@@ -189,7 +190,7 @@ ipcMain.handle("show-bulk-save-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 230, height: 170, x: Math.floor(bounds.width/2) + 200, y: Math.floor(bounds.height/2), 
-    resizable: true, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: true, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/bulksavedialog.html"))
   currentDialog.removeMenu()
@@ -288,7 +289,7 @@ ipcMain.handle("show-gif-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 190, height: 240, x: bounds.x + bounds.width - 190 - 170, y: bounds.y + 60, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/gifdialog.html"))
   currentDialog.removeMenu()
@@ -463,7 +464,7 @@ ipcMain.handle("show-crop-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 190, height: 220, x: bounds.x + 70, y: bounds.y + 400, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/cropdialog.html"))
   currentDialog.removeMenu()
@@ -534,7 +535,7 @@ ipcMain.handle("show-rotate-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 230, height: 170, x: bounds.x + bounds.width - 230 - 70, y: bounds.y + 60, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/rotatedialog.html"))
   currentDialog.removeMenu()
@@ -603,7 +604,7 @@ ipcMain.handle("show-resize-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 230, height: 150, x: bounds.x + bounds.width - 230 - 70, y: bounds.y + 40, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/resizedialog.html"))
   currentDialog.removeMenu()
@@ -669,7 +670,7 @@ ipcMain.handle("show-binarize-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 250, height: 130, x: bounds.x + 70, y: bounds.y + 450, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/binarizedialog.html"))
   currentDialog.removeMenu()
@@ -694,7 +695,7 @@ ipcMain.handle("show-pixelate-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 250, height: 130, x: bounds.x + 70, y: bounds.y + 330, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/pixelatedialog.html"))
   currentDialog.removeMenu()
@@ -762,7 +763,7 @@ ipcMain.handle("show-blur-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 250, height: 155, x: bounds.x + 70, y: bounds.y + 190, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/blurdialog.html"))
   currentDialog.removeMenu()
@@ -828,7 +829,7 @@ ipcMain.handle("show-tint-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 180, height: 135, x: bounds.x + 70, y: bounds.y + 130, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/tintdialog.html"))
   currentDialog.removeMenu()
@@ -894,7 +895,7 @@ ipcMain.handle("show-hsl-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 250, height: 180, x: bounds.x + 70, y: bounds.y + 50, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/hsldialog.html"))
   currentDialog.removeMenu()
@@ -962,7 +963,7 @@ ipcMain.handle("show-brightness-dialog", async (event) => {
   }
   const bounds = window?.getBounds()!
   currentDialog = new BrowserWindow({width: 250, height: 150, x: bounds.x + 70, y: bounds.y + 40, 
-    resizable: false, show: false, frame: false, transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", webPreferences: {
+    resizable: false, show: false, frame: false, transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", webPreferences: {
     preload: path.join(__dirname, "../preload/index.js")}})
   currentDialog.loadFile(path.join(__dirname, "../renderer/brightnessdialog.html"))
   currentDialog.removeMenu()
@@ -1455,7 +1456,7 @@ if (!singleLock) {
 
   app.on("ready", () => {
     window = new BrowserWindow({width: 900, height: 650, minWidth: 200, minHeight: 200, show: false, frame: false, resizable: true,
-    transparent: process.platform !== "win32", hasShadow: false, backgroundColor: "#00000000", center: true, webPreferences: {
+    transparent: initialTransparent, hasShadow: false, backgroundColor: "#00000000", center: true, webPreferences: {
       preload: path.join(__dirname, "../preload/index.js")}})
     window.loadFile(path.join(__dirname, "../renderer/index.html"))
     window.removeMenu()
