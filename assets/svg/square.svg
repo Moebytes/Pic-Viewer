@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="a" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" width="29.99" height="29.9" viewBox="0 0 29.99 29.9">
-  <polygon fill="currentColor" points="18.93 .04 29.99 .04 29.99 10.62 25.33 10.62 25.33 4.27 18.93 4.32 18.93 .04"/>
-  <polygon fill="currentColor" points="0 11.06 0 0 10.59 0 10.59 4.66 4.24 4.66 4.28 11.06 0 11.06"/>
-  <polygon fill="currentColor" points="11.06 29.9 0 29.9 0 19.31 4.66 19.31 4.66 25.66 11.06 25.62 11.06 29.9"/>
-  <polygon fill="currentColor" points="18.79 29.9 29.85 29.9 29.85 19.31 25.19 19.31 25.19 25.66 18.79 25.62 18.79 29.9"/>
+<svg id="a" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 30 29.9">
+  <!-- Generator: Adobe Illustrator 29.1.0, SVG Export Plug-In . SVG Version: 2.1.0 Build 142)  -->
+  <polygon fill="currentColor" points="18.2 3.2 27.3 3.2 27.3 11.9 23.5 11.9 23.5 6.7 18.2 6.7 18.2 3.2"/>
+  <polygon fill="currentColor" points="2.6 12.2 2.6 3.1 11.4 3.1 11.4 7 6.1 7 6.2 12.2 2.6 12.2"/>
+  <polygon fill="currentColor" points="11.8 27.8 2.6 27.8 2.6 19 6.5 19 6.5 24.3 11.8 24.2 11.8 27.8"/>
+  <polygon fill="currentColor" points="18.1 27.8 27.2 27.8 27.2 19 23.4 19 23.4 24.3 18.1 24.2 18.1 27.8"/>
 </svg>

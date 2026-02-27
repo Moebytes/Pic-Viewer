@@ -168,6 +168,21 @@ const TitleBar: React.FunctionComponent = () => {
                     <span className="title">Pic Viewer</span>
                 </div>
                 <div className="title-button-container">
+                    {acceptAction === "draw" ? <>
+                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
+                    <DrawUndoIcon className="title-bar-button" onClick={undo}/>
+                    <DrawIncreaseIcon className="title-bar-button" onClick={increaseSize}/>
+                    <DrawDecreaseIcon className="title-bar-button" onClick={decreaseSize}/>
+                    <input type="color" className="draw-color-box" onChange={(event) => setBrushColor(event.target.value)} value={brushColor}></input>
+                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
+                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
+                    </> : null}
+                    {acceptAction === "crop" ? <>
+                    <SquareIcon className="title-bar-button" onClick={() => triggerAction("square")}/>
+                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
+                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
+                    </> : null}
+
                     <UploadIcon className="title-bar-button" onClick={upload}/>
                     <SearchIcon className="title-bar-button" onClick={search}/>
                     <PasteIcon className="title-bar-button" onClick={paste}/>
@@ -183,21 +198,6 @@ const TitleBar: React.FunctionComponent = () => {
                     <LightIcon className="title-bar-button" onClick={switchTheme}/> :
                     <DarkIcon className="title-bar-button" onClick={switchTheme}/>}
                     <MacIcon className="title-bar-button" onClick={switchOSStyle}/>
-
-                    {acceptAction === "draw" ? <>
-                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
-                    <DrawUndoIcon className="title-bar-button" onClick={undo}/>
-                    <DrawIncreaseIcon className="title-bar-button" onClick={increaseSize}/>
-                    <DrawDecreaseIcon className="title-bar-button" onClick={decreaseSize}/>
-                    <input type="color" className="draw-color-box" onChange={(event) => setBrushColor(event.target.value)} value={brushColor}></input>
-                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
-                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
-                    </> : null}
-                    {acceptAction === "crop" ? <>
-                    <SquareIcon className="title-bar-button" onClick={() => triggerAction("square")}/>
-                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
-                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
-                    </> : null}
                 </div>
             </div>
         )
@@ -212,6 +212,21 @@ const TitleBar: React.FunctionComponent = () => {
                     <span className="title">Pic Viewer</span>
                 </div>
                 <div className="title-button-container">
+                    {acceptAction === "draw" ? <>
+                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
+                    <DrawUndoIcon className="title-bar-button" onClick={undo}/>
+                    <DrawIncreaseIcon className="title-bar-button" onClick={increaseSize}/>
+                    <DrawDecreaseIcon className="title-bar-button" onClick={decreaseSize}/>
+                    <input type="color" className="draw-color-box" onChange={(event) => setBrushColor(event.target.value)} value={brushColor}></input>
+                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
+                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
+                    </> : null}
+                    {acceptAction === "crop" ? <>
+                    <SquareIcon className="title-bar-button" onClick={() => triggerAction("square")}/>
+                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
+                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
+                    </> : null}
+
                     <UploadIcon className="title-bar-button" onClick={upload}/>
                     <SearchIcon className="title-bar-button" onClick={search}/>
                     <PasteIcon className="title-bar-button" onClick={paste}/>
@@ -227,21 +242,6 @@ const TitleBar: React.FunctionComponent = () => {
                     <LightIcon className="title-bar-button" onClick={switchTheme}/> :
                     <DarkIcon className="title-bar-button" onClick={switchTheme}/>}
                     <WindowsIcon className="title-bar-button" onClick={switchOSStyle}/>
-
-                    {acceptAction === "draw" ? <>
-                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
-                    <DrawUndoIcon className="title-bar-button" onClick={undo}/>
-                    <DrawIncreaseIcon className="title-bar-button" onClick={increaseSize}/>
-                    <DrawDecreaseIcon className="title-bar-button" onClick={decreaseSize}/>
-                    <input type="color" className="draw-color-box" onChange={(event) => setBrushColor(event.target.value)} value={brushColor}></input>
-                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
-                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
-                    </> : null}
-                    {acceptAction === "crop" ? <>
-                    <SquareIcon className="title-bar-button" onClick={() => triggerAction("square")}/>
-                    <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
-                    <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
-                    </> : null}
                 </div>
             </div>
             <div className="title-group-container">
