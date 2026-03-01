@@ -121,6 +121,9 @@ ipcMain.handle("close-current-dialog", () => {
 })
 
 const resizeWindow = async (image: string) => {
+  const keepUnlocked = store.get("keep-ratio-unlocked", false)
+  if (keepUnlocked) return window?.setAspectRatio(0)
+
   const dim = await mainFunctions.getDimensions(image)
   const {width, height} = functions.constrainDimensions(dim.width, dim.height)
   window?.setAspectRatio(width / height)
@@ -1329,6 +1332,7 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
     {label: "Reset Values", click: () => {
       tempStore = {}
     }},
+    {type: "separator"},
     {label: "Lock Aspect Ratio", click: () => {
       let images = historyStates[historyIndex] as any
       if (images?.[0]) resizeWindow(images[0])
@@ -1336,10 +1340,16 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
     {label: "Unlock Aspect Ratio", click: () => {
       window?.setAspectRatio(0)
     }},
-    {label: "Toggle Fullscreen", click: () => event.sender.send("fullscreen")},
+    {label: "Keep Ratio Unlocked", type: "checkbox",
+      checked: store.get("keep-ratio-unlocked", false) as boolean,
+      click: (menuItem) => {
+        store.set("keep-ratio-unlocked", menuItem.checked)
+        if (menuItem.checked) window?.setAspectRatio(0)
+    }},
     {type: "separator"},
     {label: "Save Image", click: () => event.sender.send("save-img")},
-    {label: "Copy Address", click: () => event.sender.send("copy-address", {x, y})}
+    {label: "Copy Address", click: () => event.sender.send("copy-address", {x, y})},
+    {label: "Toggle Fullscreen", click: () => event.sender.send("fullscreen")}
   ]
 
   const menu = Menu.buildFromTemplate(template)
@@ -1411,6 +1421,7 @@ const applicationMenu = () =>  {
             const win = window as BrowserWindow
             win?.webContents.send("zoom-out")
         }},
+        {type: "separator"},
         {label: "Lock Aspect Ratio",
           click: () => {
             let images = historyStates[historyIndex] as any
@@ -1421,6 +1432,13 @@ const applicationMenu = () =>  {
             const win = window as BrowserWindow
             win.setAspectRatio(0)
         }},
+        {label: "Keep Ratio Unlocked", type: "checkbox",
+          checked: store.get("keep-ratio-unlocked", false) as boolean,
+          click: (menuItem) => {
+            store.set("keep-ratio-unlocked", menuItem.checked)
+            if (menuItem.checked) window?.setAspectRatio(0)
+        }},
+        {type: "separator"},
         {label: "Toggle Fullscreen",
           click: (item, window) => {
             const win = window as BrowserWindow
