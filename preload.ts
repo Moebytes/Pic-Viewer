@@ -1,13 +1,10 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Pic Viewer - A cute image viewer ❤                        *
+ * Copyright © 2026 Moebytes <moebytes.com>                  *
+ * Licensed under CC BY-NC 4.0. See license.txt for details. *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 import {contextBridge, ipcRenderer, clipboard, app, nativeImage, IpcRendererEvent} from "electron"
-
-const base64ToBuffer = (base64: string) => {
-    const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)!
-    return Buffer.from(matches[2], "base64")
-}
-
-const bufferToBase64 = (buffer: Buffer, type: string) => {
-    return `data:${type};base64,${buffer.toString("base64")}`
-}
 
 type SystemPath = "home" | "appData" | "userData" | "temp" | "exe" | "module" 
   | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos" | "recent" 

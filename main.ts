@@ -1,3 +1,9 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Pic Viewer - A cute image viewer ❤                        *
+ * Copyright © 2026 Moebytes <moebytes.com>                  *
+ * Licensed under CC BY-NC 4.0. See license.txt for details. *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 import {app, BrowserWindow, Menu, MenuItemConstructorOptions, dialog, ipcMain, session, 
 screen, clipboard, nativeImage, shell} from "electron"
 import localShortcut from "electron-localshortcut"

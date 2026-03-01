@@ -1,3 +1,9 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Pic Viewer - A cute image viewer ❤                        *
+ * Copyright © 2026 Moebytes <moebytes.com>                  *
+ * Licensed under CC BY-NC 4.0. See license.txt for details. *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 import React, {useEffect, useEffectEvent, useState, useRef} from "react"
 import {useDrawingSelector, useDrawingActions, useActiveSelector, useFilterSelector,
 useFilterActions} from "../store"
