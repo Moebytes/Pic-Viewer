@@ -398,14 +398,36 @@ const PhotoViewer: React.FunctionComponent = () => {
                 const containerRef = containerRefs[i]
                 if (!imageRef.current || !containerRef.current) continue
                 let image = feedbackImages ? await functions.createImage(feedbackImages[i]) : imageRef.current
-                const img = functions.render(image, containerRef.current, state)
-                rendered.push(img)
+                if (path.extname(image.src) === ".gif") {
+                    const {frameArray, delayArray} = await functions.getGIFFrames(image.src, {canvas: true})
+                    const newFrameArray = [] as Buffer[]
+                    for (let i = 0; i < frameArray.length; i++) {
+                        const frame = functions.render(frameArray[i], containerRef.current, state, true)
+                        newFrameArray.push(Buffer.from(frame))
+                    }
+                    const img = await functions.encodeGIF(newFrameArray, delayArray, frameArray[0].width, frameArray[0].height)
+                    rendered.push(functions.bufferToBase64(img, "image/gif"))
+                } else {
+                    const img = functions.render(image, containerRef.current, state)
+                    rendered.push(img)
+                }
             }
         } else {
             if (!imageRef.current || !containerRef.current) return
             let image = feedbackImages ? await functions.createImage(feedbackImages[0]) : imageRef.current
-            const img = functions.render(image, containerRef.current, state)
-            rendered.push(img)
+            if (path.extname(image.src) === ".gif") {
+                const {frameArray, delayArray} = await functions.getGIFFrames(image.src, {canvas: true})
+                const newFrameArray = [] as Buffer[]
+                for (let i = 0; i < frameArray.length; i++) {
+                    const frame = functions.render(frameArray[i], containerRef.current, state, true)
+                    newFrameArray.push(Buffer.from(frame))
+                }
+                const img = await functions.encodeGIF(newFrameArray, delayArray, frameArray[0].width, frameArray[0].height)
+                rendered.push(functions.bufferToBase64(img, "image/gif"))
+            } else {
+                const img = functions.render(image, containerRef.current, state)
+                rendered.push(img)
+            }
         }
         await window.ipcRenderer.invoke("append-history-state", rendered)
         return rendered

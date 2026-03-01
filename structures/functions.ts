@@ -22,6 +22,11 @@ export interface ReduxState {
     pixelate: number
 }
 
+export interface AnimationFrame {
+    frame: HTMLCanvasElement
+    delay: number
+}
+
 export default class Functions {
     public static arrayIncludes = (str: string, arr: string[]) => {
         for (let i = 0; i < arr.length; i++) {
@@ -141,46 +146,26 @@ export default class Functions {
         return `${Number((bytes / Math.pow(1024, i)).toFixed(2))} ${["B", "kB", "MB", "GB", "TB"][i]}`
     }
 
-    public static encodeGIF = async (frames: Buffer[], delays: number[], width: number, height: number, options?: {transparentColor?: string}) => {
-        if (!options) options = {} as {transparentColor?: string}
-        const gif = new GifEncoder(width, height, {highWaterMark: 5 * 1024 * 1024})
-        gif.setQuality(10)
-        gif.setRepeat(0)
-        gif.writeHeader()
-        if (options?.transparentColor) gif.setTransparent(Functions.parseTransparentColor(options.transparentColor))
-        let counter = 0
+    public static getGIFFrames = async <T extends boolean = false>(image: any, options?: {speed?: number, reverse?: boolean, canvas?: T}) => {
+        const {speed = 1, reverse = false, canvas = false as T} = options || {}
+        const frames = await gifFrames({url: image, frames: "all", outputType: canvas ? "canvas" : "png"})
 
-        const addToGif = async (frames: Buffer[]) => {
-            if (!frames[counter]) {
-                gif.finish()
-            } else {
-                const {data} = await pixels(frames[counter])
-                gif.setDelay(delays[counter])
-                gif.addFrame(data)
-                counter++
-                addToGif(frames)
-            }
-        }
-        await addToGif(frames)
-        return Functions.streamToBuffer(gif as NodeJS.ReadableStream)
-    }
-
-    public static getGIFFrames = async (image: any, options?: {speed?: number, reverse?: boolean}) => {
-        if (!options) options = {} as {speed: number, reverse: boolean}
-        if (!options.speed) options.speed = 1
-        if (!options.reverse) options.reverse = false
-        const frames = await gifFrames({url: image, frames: "all", outputType: "png"})
-        let frameArray = [] as Buffer[]
+        let frameArray = [] as unknown as T extends true ? HTMLCanvasElement[] : Buffer[]
         let delayArray = [] as number[]
-        const constraint = options.speed > 1 ? frames.length / options.speed : frames.length
+        const constraint = speed > 1 ? frames.length / speed : frames.length
         let step = Math.ceil(frames.length / constraint)
+
         for (let i = 0; i < frames.length; i += step) {
-            frameArray.push(await Functions.streamToBuffer(frames[i].getImage()))
+            if (canvas) {
+                frameArray.push(frames[i].getImage() as any)
+            } else {
+                frameArray.push(await Functions.streamToBuffer(frames[i].getImage()) as any)
+            }
             delayArray.push(frames[i].frameInfo.delay * 10)
         }
-        if (options.speed < 1) delayArray = delayArray.map((n) => n / options?.speed!)
-        if (options.reverse) {
-            frameArray = frameArray.reverse()
+        if (speed < 1) delayArray = delayArray.map((n) => n / options?.speed!)
+        if (reverse) {
+            frameArray = frameArray.reverse() as any
             delayArray = delayArray.reverse()
         }
         return {frameArray, delayArray}
@@ -291,8 +276,8 @@ export default class Functions {
         })
     }
 
-    public static render = (image: HTMLImageElement, container: HTMLDivElement, state: ReduxState) => {
-        if (!image || !container) return ""
+    public static render = <T extends boolean = false>(image: HTMLImageElement | HTMLCanvasElement, container: HTMLDivElement, state: ReduxState, buffer?: T) => {
+        if (!image || !container) return "" as T extends true ? ArrayBuffer : string
         let brightness = state.brightness ?? 100
         let contrast = state.contrast ?? 100
         let hue = state.hue ?? 180
@@ -302,11 +287,11 @@ export default class Functions {
         const imageWidth = container.clientWidth
         const imageHeight = container.clientHeight
         const canvas = document.createElement("canvas") as HTMLCanvasElement
-        canvas.width = image.naturalWidth
-        canvas.height = image.naturalHeight
+        canvas.width = image instanceof HTMLImageElement ? image.naturalWidth : image.width
+        canvas.height = image instanceof HTMLImageElement ? image.naturalHeight : image.height
         const ctx = canvas.getContext("2d")!
-        const scaleX = image.naturalWidth / container.clientWidth
-        const scaleY = image.naturalHeight / container.clientHeight
+        const scaleX = canvas.width / container.clientWidth
+        const scaleY = canvas.height / container.clientHeight
         const scale = Math.max(scaleX, scaleY)
         ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) hue-rotate(${hue - 180}deg) saturate(${saturation}%) blur(${blur * scale}px)`
         ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
@@ -325,6 +310,90 @@ export default class Functions {
             ctx.drawImage(pixelateCanvas, 0, 0, canvas.width, canvas.height)
             ctx.imageSmoothingEnabled = true
         }
-        return canvas.toDataURL("image/png")
+        if (buffer) {
+            const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
+            return img.data.buffer as T extends true ? ArrayBuffer : string
+        }
+        return canvas.toDataURL("image/png") as T extends true ? ArrayBuffer : string
+    }
+
+    public static isAnimatedWebp = (buffer: ArrayBuffer) => {
+        let str = ""
+        const byteArray = new Uint8Array(Buffer.from(buffer))
+        for (let i = 0; i < byteArray.length; i++) {
+            str += String.fromCharCode(byteArray[i])
+        }
+        return str.indexOf("ANMF") !== -1
+    }
+
+    public static isAnimatedPng = (buffer: ArrayBuffer) => {
+        let str = ""
+        const byteArray = new Uint8Array(Buffer.from(buffer))
+        for (let i = 0; i < byteArray.length; i++) {
+            str += String.fromCharCode(byteArray[i])
+        }
+        return str.indexOf("acTL") !== -1
+    }
+
+    public static extractAnimationFrames = async (data: ArrayBuffer, format = "gif") => {
+        let index = 0
+        let imageDecoder = new ImageDecoder({data, type: `image/${format}`, preferAnimation: true})
+        let result = [] as AnimationFrame[]
+        while (true) {
+            try {
+                const decoded = await imageDecoder.decode({frameIndex: index++})
+                const canvas = document.createElement("canvas")
+                canvas.width = decoded.image.codedWidth
+                canvas.height = decoded.image.codedHeight
+                const canvasContext = canvas.getContext("2d")!
+                const image = await createImageBitmap(decoded.image)
+                canvasContext.drawImage(image, 0, 0)
+                const duration = decoded.image.duration || 0
+                result.push({frame: canvas, delay: duration / 1000.0})
+            } catch {
+                break
+            }
+        }
+
+        return result
+    }
+
+    public static yieldToUI = () => {
+        return new Promise<void>((resolve) => setTimeout(resolve, 0))
+    }
+
+    public static encodeGIF = async (frames: Buffer[], delays: number[], width: number, height: number, options?: {transparentColor?: string}) => {
+        const gif = new GifEncoder(width, height, {highWaterMark: 5 * 1024 * 1024})
+        gif.setQuality(10)
+        if (options?.transparentColor) gif.setTransparent(Functions.parseTransparentColor(options.transparentColor))
+        gif.setRepeat(0)
+        gif.writeHeader()
+
+        const chunks: Buffer[] = []
+
+        gif.on("data", (chunk: Buffer) => {
+            chunks.push(chunk)
+        })
+
+        const finished = new Promise<Buffer>((resolve, reject) => {
+            gif.on("end", () => {
+                resolve(Buffer.concat(chunks))
+            })
+            gif.on("error", reject)
+        })
+
+        for (let i = 0; i < frames.length; i++) {
+            const {data} = await pixels(frames[i], {width, height})
+            gif.setDelay(delays[i])
+            gif.addFrame(data)
+
+            if (i % 2 === 0) {
+                await Functions.yieldToUI()
+            }
+        }
+
+        gif.finish()
+
+        return finished
     }
 }
