@@ -23,6 +23,7 @@ let currentDialog: Electron.BrowserWindow | null
 
 const store = new Store()
 let initialTransparent = process.platform === "win32" ? store.get("transparent", false) as boolean : true
+let windowOpacity = store.get("window-opacity", 100) as number
 let tempStore = {} as any
 let filePath = ""
 
@@ -85,6 +86,10 @@ ipcMain.handle("clipboard:writeImage", (event, image: string) => {
   } else {
       clipboard.writeImage(nativeImage.createFromPath(image.replace("file:///", "")))
   }
+})
+
+ipcMain.handle("app:getPath", (event, path: string) => {
+  return app.getPath(path as any)
 })
 
 ipcMain.on("sync-redux-state", (event, state: any) => {
@@ -204,6 +209,7 @@ ipcMain.handle("show-bulk-save-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/bulksavedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -303,6 +309,7 @@ ipcMain.handle("show-gif-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/gifdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -507,6 +514,7 @@ ipcMain.handle("show-crop-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/cropdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -578,6 +586,7 @@ ipcMain.handle("show-rotate-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/rotatedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -647,6 +656,7 @@ ipcMain.handle("show-resize-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/resizedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -713,6 +723,7 @@ ipcMain.handle("show-binarize-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/binarizedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -738,6 +749,7 @@ ipcMain.handle("show-pixelate-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/pixelatedialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -806,6 +818,7 @@ ipcMain.handle("show-blur-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/blurdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -872,6 +885,7 @@ ipcMain.handle("show-tint-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/tintdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -939,6 +953,7 @@ ipcMain.handle("show-hsl-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/hsldialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -1007,6 +1022,7 @@ ipcMain.handle("show-brightness-dialog", async (event) => {
   currentDialog.loadFile(path.join(__dirname, "../renderer/brightnessdialog.html"))
   currentDialog.removeMenu()
   currentDialog.setAlwaysOnTop(true)
+  currentDialog.setOpacity(windowOpacity / 100)
   currentDialog.on("closed", () => {
     currentDialog = null
   })
@@ -1327,6 +1343,27 @@ ipcMain.handle("ready-to-show", () => {
     window?.focus()
 })
 
+const setWindowOpacity = (percent: number) => {
+  windowOpacity = Math.max(10, Math.min(100, percent))
+  store.set("window-opacity", windowOpacity)
+
+  window?.setOpacity(windowOpacity / 100)
+  currentDialog?.setOpacity(windowOpacity / 100)
+
+  applicationMenu()
+}
+
+const opacitySubmenu = (): MenuItemConstructorOptions[] => {
+  const values = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]
+
+  return values.map(value => ({
+    label: `${value}%`,
+    type: "radio",
+    checked: windowOpacity === value,
+    click: () => setWindowOpacity(value)
+  }))
+}
+
 ipcMain.handle("context-menu", (event, {x, y}) => {
   const template: MenuItemConstructorOptions[] = [
     {label: "Copy", accelerator: "CmdOrCtrl+C", click: () => event.sender.send("copy-image", {x, y})},
@@ -1338,6 +1375,7 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
     {label: "Reset Values", click: () => {
       tempStore = {}
     }},
+    {label: `Opacity (${windowOpacity}%)`, submenu: opacitySubmenu()},
     {type: "separator"},
     {label: "Lock Aspect Ratio", click: () => {
       let images = historyStates[historyIndex] as any
@@ -1445,6 +1483,7 @@ const applicationMenu = () =>  {
             if (menuItem.checked) window?.setAspectRatio(0)
         }},
         {type: "separator"},
+        {label: `Opacity (${windowOpacity}%)`, submenu: opacitySubmenu()},
         {label: "Toggle Fullscreen",
           click: (item, window) => {
             const win = window as BrowserWindow
@@ -1486,6 +1525,7 @@ if (!singleLock) {
       preload: path.join(__dirname, "../preload/index.js")}})
     window.loadFile(path.join(__dirname, "../renderer/index.html"))
     window.removeMenu()
+    window.setOpacity(windowOpacity / 100)
     applicationMenu()
     openFile()
     localShortcut.register(window, "Control+Shift+I", () => {

@@ -4,7 +4,8 @@
  * Licensed under CC BY-NC 4.0. See license.txt for details. *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-import {contextBridge, ipcRenderer, clipboard, app, nativeImage, IpcRendererEvent} from "electron"
+import {contextBridge, ipcRenderer, webUtils, app, nativeImage, IpcRendererEvent} from "electron"
+
 
 type SystemPath = "home" | "appData" | "userData" | "temp" | "exe" | "module" 
   | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos" | "recent" 
@@ -27,7 +28,10 @@ declare global {
       writeImage: (image: string) => Promise<void>
     },
     app: {
-      getPath: (location: SystemPath) => string
+      getPath: (location: SystemPath) => Promise<string>
+    },
+    webUtils: {
+      getPathForFile: (file: File) => string
     }
   }
 }
@@ -60,7 +64,11 @@ contextBridge.exposeInMainWorld("clipboard", {
 })
 
 contextBridge.exposeInMainWorld("app", {
-    getPath: (location: SystemPath) => app.getPath(location)
+    getPath: (location: SystemPath) => ipcRenderer.invoke("app:getPath", location)
+})
+
+contextBridge.exposeInMainWorld("webUtils", {
+    getPathForFile: (file: File) => webUtils.getPathForFile(file)
 })
 
 contextBridge.exposeInMainWorld("platform", process.platform === "darwin" ? "mac" : "windows")

@@ -30,7 +30,6 @@ import functions, { ReduxState } from "../structures/functions"
 import CanvasDraw from "../structures/CanvasDraw"
 import {TransformWrapper, TransformComponent} from "react-zoom-pan-pinch"
 import BulkContainer, {BulkRef} from "./BulkContainer"
-import {useDropzone} from "react-dropzone"
 import path from "path"
 import "./styles/photoviewer.less"
 
@@ -200,14 +199,22 @@ const PhotoViewer: React.FunctionComponent = () => {
         }
     }, [drawing])
 
-    const onDrop = (files: any) => {
-        files = files.map((f: any) => f.path)
+    const dragOver = (event: React.DragEvent) => {
+        event.preventDefault()
+    }
+
+    const onDrop = (event: React.DragEvent) => {
+        event.preventDefault()
+        
+        let files = [] as string[]
+        for (let i = 0; i < event.dataTransfer.files.length; i++) {
+            files.push(window.webUtils.getPathForFile(event.dataTransfer.files[i]))
+        }
+        
         if (files[0]) {
             upload(files)
         }
     }
-
-    const {getRootProps} = useDropzone({onDrop})
 
     useEffect(() => {
         const updateDimensions = async () => {
@@ -660,7 +667,7 @@ const PhotoViewer: React.FunctionComponent = () => {
                 } else {
                     name = path.basename(defaultPath)
                 }
-                defaultPath = `${window.app.getPath("downloads")}/${name}`
+                defaultPath = `${await window.app.getPath("downloads")}/${name}`
             }
             let savePath = await window.ipcRenderer.invoke("save-dialog", defaultPath)
             if (!savePath) return
@@ -814,7 +821,7 @@ const PhotoViewer: React.FunctionComponent = () => {
     }
 
     return (
-        <main className="photo-viewer" {...getRootProps()} ref={fullscreenRef}>
+        <main className="photo-viewer" onDrop={onDrop} onDragOver={dragOver} ref={fullscreenRef}>
             <div className={hover && !drawing ? "left-adjustment-bar visible" : "left-adjustment-bar"} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
                 <BrightnessIcon className="adjustment-img" onClick={() => updateBrightness()}/>
                 <HueIcon className="adjustment-img" onClick={() => updateHue()}/>
