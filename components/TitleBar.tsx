@@ -24,6 +24,7 @@ import EraseIcon from "../assets/svg/erase.svg"
 import DrawIncreaseIcon from "../assets/svg/draw-increase.svg"
 import DrawDecreaseIcon from "../assets/svg/draw-decrease.svg"
 import DrawUndoIcon from "../assets/svg/draw-undo.svg"
+import DrawRedoIcon from "../assets/svg/draw-redo.svg"
 import DrawInvertIcon from "../assets/svg/draw-invert.svg"
 import SquareIcon from "../assets/svg/square.svg"
 import CancelIcon from "../assets/svg/cancel.svg"
@@ -122,6 +123,10 @@ const TitleBar: React.FunctionComponent = () => {
         window.ipcRenderer.invoke("draw-undo")
     }
 
+    const redo = () => {
+        window.ipcRenderer.invoke("draw-redo")
+    }
+
     const invert = () => {
         window.ipcRenderer.invoke("draw-invert")
     }
@@ -175,10 +180,13 @@ const TitleBar: React.FunctionComponent = () => {
                 </div>
                 <div className="title-button-container">
                     {acceptAction === "draw" ? <>
-                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
                     <DrawUndoIcon className="title-bar-button" onClick={undo}/>
+                    <DrawRedoIcon className="title-bar-button" onClick={redo}/>
+                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
                     <DrawIncreaseIcon className="title-bar-button" onClick={increaseSize}/>
                     <DrawDecreaseIcon className="title-bar-button" onClick={decreaseSize}/>
+                    {drawing && erasing ? <EraseIcon className="title-bar-button" onClick={draw}/> : 
+                    <DrawIcon className="title-bar-button" onClick={draw}/>}
                     <input type="color" className="draw-color-box" onChange={(event) => setBrushColor(event.target.value)} value={brushColor}></input>
                     <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
                     <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
@@ -192,8 +200,9 @@ const TitleBar: React.FunctionComponent = () => {
                     <UploadIcon className="title-bar-button" onClick={upload}/>
                     <SearchIcon className="title-bar-button" onClick={search}/>
                     <PasteIcon className="title-bar-button" onClick={paste}/>
+                    {acceptAction !== "draw" ? <>
                     {drawing && erasing ? <EraseIcon className="title-bar-button" onClick={draw}/> : 
-                    <DrawIcon className="title-bar-button" onClick={draw}/>}
+                    <DrawIcon className="title-bar-button" onClick={draw}/>}</> : null}
                     <GIFIcon className="title-bar-button" onClick={gif}/>
                     {imageDrag ?
                     <ImageDragIcon className="title-bar-button" onClick={drag}/> :
@@ -219,10 +228,13 @@ const TitleBar: React.FunctionComponent = () => {
                 </div>
                 <div className="title-button-container">
                     {acceptAction === "draw" ? <>
-                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
                     <DrawUndoIcon className="title-bar-button" onClick={undo}/>
+                    <DrawRedoIcon className="title-bar-button" onClick={redo}/>
+                    <DrawInvertIcon className="title-bar-button" onClick={invert}/>
                     <DrawIncreaseIcon className="title-bar-button" onClick={increaseSize}/>
                     <DrawDecreaseIcon className="title-bar-button" onClick={decreaseSize}/>
+                    {drawing && erasing ? <EraseIcon className="title-bar-button" onClick={draw}/> : 
+                    <DrawIcon className="title-bar-button" onClick={draw}/>}
                     <input type="color" className="draw-color-box" onChange={(event) => setBrushColor(event.target.value)} value={brushColor}></input>
                     <CancelIcon className="title-bar-button" onClick={() => triggerAction("cancel")}/>
                     <AcceptIcon className="title-bar-button" onClick={() => triggerAction("accept")}/>
@@ -236,8 +248,9 @@ const TitleBar: React.FunctionComponent = () => {
                     <UploadIcon className="title-bar-button" onClick={upload}/>
                     <SearchIcon className="title-bar-button" onClick={search}/>
                     <PasteIcon className="title-bar-button" onClick={paste}/>
+                    {acceptAction !== "draw" ? <>
                     {drawing && erasing ? <EraseIcon className="title-bar-button" onClick={draw}/> : 
-                    <DrawIcon className="title-bar-button" onClick={draw}/>}
+                    <DrawIcon className="title-bar-button" onClick={draw}/>}</> : null}
                     <GIFIcon className="title-bar-button" onClick={gif}/>
                     {imageDrag ?
                     <ImageDragIcon className="title-bar-button" onClick={drag}/> :

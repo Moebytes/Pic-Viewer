@@ -159,6 +159,8 @@ export default class extends PureComponent {
     this.valuesChanged = true;
     this.isDrawing = false;
     this.isPressing = false;
+
+    this.redoStack = [];
   }
 
   componentDidMount() {
@@ -251,10 +253,51 @@ export default class extends PureComponent {
       drawImage({ ctx: this.ctx.grid, img: this.image });
   };
 
-  undo = () => {
-    const lines = this.lines.slice(0, -1);
+  redrawFromLines = () => {
     this.clear();
-    this.simulateDrawingLines({ lines, immediate: true });
+
+    this.lines.forEach(line => {
+      this.drawPoints({
+        points: line.points,
+        brushColor: line.brushColor,
+        brushRadius: line.brushRadius
+      });
+
+      // Copy temp → drawing
+      this.ctx.drawing.drawImage(
+        this.canvas.temp,
+        0,
+        0,
+        this.canvas.temp.width,
+        this.canvas.temp.height
+      );
+
+      this.ctx.temp.clearRect(
+        0,
+        0,
+        this.canvas.temp.width,
+        this.canvas.temp.height
+      );
+    });
+  };
+
+  undo = () => {
+    if (this.lines.length === 0) return;
+
+    const removedLine = this.lines.pop();
+    this.redoStack.push(removedLine);
+
+    this.redrawFromLines();
+    this.triggerOnChange();
+  };
+
+  redo = () => {
+    if (this.redoStack.length === 0) return;
+
+    const restoredLine = this.redoStack.pop();
+    this.lines.push(restoredLine);
+    
+    this.redrawFromLines();
     this.triggerOnChange();
   };
 
@@ -493,11 +536,16 @@ export default class extends PureComponent {
   handlePointerMove = (x, y) => {
     if (this.props.disabled) return;
 
+    this.currentPointer = { x, y };
     this.lazy.update({ x, y });
     const isDisabled = !this.lazy.isEnabled();
 
     // Add erase key to the first point in eraser lines
-    const point = this.props.erase ? { ...this.lazy.brush.toObject(), erase: true } : this.lazy.brush.toObject();
+    //const point = this.props.erase ? { ...this.lazy.brush.toObject(), erase: true } : this.lazy.brush.toObject();
+
+    const point = this.props.erase
+      ? { x, y, erase: true }
+      : { x, y };
 
     if (
       (this.isPressing && !this.isDrawing) ||
@@ -510,7 +558,7 @@ export default class extends PureComponent {
 
     if (this.isDrawing) {
       // Add new point
-      this.points.push(this.lazy.brush.toObject());
+      this.points.push(point);
 
       // Draw current points
       this.drawPoints({
@@ -524,10 +572,13 @@ export default class extends PureComponent {
   };
 
   drawPoints = ({ points, brushColor, brushRadius }) => {
+    const isErasing = brushColor === "erase";
+
     this.ctx.temp.lineJoin = "round";
     this.ctx.temp.lineCap = "round";
-    this.ctx.temp.strokeStyle = brushColor === "erase" ? this.props.eraseColor : brushColor;
-    this.ctx.drawing.globalCompositeOperation = brushColor === "erase" ? "destination-out" : "source-over";
+    this.ctx.temp.globalCompositeOperation = "source-over";
+    this.ctx.temp.strokeStyle = isErasing ? "#000000" : brushColor;
+    this.ctx.temp.lineWidth = brushRadius * 2;
 
     this.ctx.temp.clearRect(
       0,
@@ -535,6 +586,7 @@ export default class extends PureComponent {
       this.ctx.temp.canvas.width,
       this.ctx.temp.canvas.height
     );
+
     this.ctx.temp.lineWidth = brushRadius * 2;
 
     let p1 = points[0];
@@ -561,6 +613,20 @@ export default class extends PureComponent {
     // the bezier control point
     this.ctx.temp.lineTo(newP1.x, newP1.y);
     this.ctx.temp.stroke();
+
+    const width = this.canvas.temp.width;
+    const height = this.canvas.temp.height;
+
+    if (isErasing) {
+      this.ctx.drawing.globalCompositeOperation = "destination-out";
+    } else {
+      this.ctx.drawing.globalCompositeOperation = "source-over";
+    }
+
+    this.ctx.drawing.drawImage(this.canvas.temp, 0, 0, width, height);
+
+    this.ctx.drawing.globalCompositeOperation = "source-over";
+    this.ctx.temp.clearRect(0, 0, width, height);
   };
 
   saveLine = ({ brushColor, brushRadius } = {}) => {
@@ -577,18 +643,10 @@ export default class extends PureComponent {
       brushRadius: brushRadius || this.props.brushRadius
     });
 
+    this.redoStack = [];
+
     // Reset points array
     this.points.length = 0;
-
-    const width = this.canvas.temp.width;
-    const height = this.canvas.temp.height;
-
-    // Copy the line to the drawing canvas
-    this.ctx.drawing.drawImage(this.canvas.temp, 0, 0, width, height);
-
-    // Clear the temporary line-drawing canvas
-    this.ctx.temp.clearRect(0, 0, width, height);
-
     this.triggerOnChange();
   };
 
@@ -597,7 +655,6 @@ export default class extends PureComponent {
   };
 
   clear = () => {
-    this.lines = [];
     this.valuesChanged = true;
     this.ctx.drawing.clearRect(
       0,
@@ -615,10 +672,9 @@ export default class extends PureComponent {
 
   loop = ({ once = false } = {}) => {
     if (this.mouseHasMoved || this.valuesChanged) {
-      const pointer = this.lazy.getPointerCoordinates();
-      const brush = this.lazy.getBrushCoordinates();
+      const pointer = this.currentPointer || { x: 0, y: 0 };
 
-      this.drawInterface(this.ctx.interface, pointer, brush);
+      this.drawInterface(this.ctx.interface, pointer);
       this.mouseHasMoved = false;
       this.valuesChanged = false;
     }
@@ -667,51 +723,32 @@ export default class extends PureComponent {
     return {x, y}
   }
 
-  drawInterface = (ctx, pointer, brush) => {
+  drawInterface = (ctx, pointer) => {
     if (this.props.hideInterface) return;
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    // Color brush preview according to erase prop
-    const brushColor = this.props.erase ? this.props.eraseColor : this.props.brushColor;
-    let brushX = brush.x / this.props.zoom;
-    let brushY = brush.y / this.props.zoom;
-    let pointerX = pointer.x / this.props.zoom;
-    let pointerY = pointer.y / this.props.zoom;
-    
-    // Draw brush preview
-    ctx.beginPath();
-    ctx.fillStyle = brushColor;
-    ctx.arc(brushX, brushY, this.props.brushRadius, 0, Math.PI * 2, true);
-    ctx.fill();
+    const { x, y } = pointer;
+    const drawX = x / this.props.zoom;
+    const drawY = y / this.props.zoom;
 
-    // Draw mouse point (the one directly at the cursor)
     ctx.beginPath();
-    ctx.fillStyle = this.props.catenaryColor;
-    ctx.arc(pointerX, pointerY, 4, 0, Math.PI * 2, true);
-    ctx.fill();
+    ctx.arc(drawX, drawY, this.props.brushRadius, 0, Math.PI * 2);
 
-    // Draw catenary
-    if (this.lazy.isEnabled()) {
-      ctx.beginPath();
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-      ctx.setLineDash([2, 4]);
-      ctx.strokeStyle = this.props.catenaryColor;
-      this.catenary.drawToCanvas(
-        this.ctx.interface,
-        brush,
-        pointer,
-        this.chainLength
-      );
+    if (this.props.erase) {
+      // Transparent fill
+      ctx.fillStyle = "rgba(0,0,0,0)";
+      ctx.fill();
+
+      // Black outline
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "#000";
       ctx.stroke();
+    } else {
+      // Normal brush
+      ctx.fillStyle = this.props.brushColor;
+      ctx.fill();
     }
-
-    // Draw brush point (the one in the middle of the brush preview)
-    ctx.beginPath();
-    ctx.fillStyle = this.props.catenaryColor;
-    ctx.arc(brushX, brushY, 2, 0, Math.PI * 2, true);
-    ctx.fill();
   };
 
   render() {

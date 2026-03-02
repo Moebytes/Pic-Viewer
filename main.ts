@@ -233,6 +233,10 @@ ipcMain.handle("draw-undo", () => {
   window?.webContents.send("draw-undo")
 })
 
+ipcMain.handle("draw-redo", () => {
+  window?.webContents.send("draw-redo")
+})
+
 ipcMain.handle("draw-invert", () => {
   window?.webContents.send("draw-invert")
 })

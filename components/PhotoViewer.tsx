@@ -140,6 +140,7 @@ const PhotoViewer: React.FunctionComponent = () => {
         window.ipcRenderer.on("bulk-process", bulkProcess)
         window.ipcRenderer.on("draw", draw)
         window.ipcRenderer.on("draw-undo", undoDraw)
+        window.ipcRenderer.on("draw-redo", redoDraw)
         window.ipcRenderer.on("draw-clear", clearDraw)
         window.ipcRenderer.on("draw-increase-size", increaseBrushSize)
         window.ipcRenderer.on("draw-decrease-size", decreaseBrushSize)
@@ -166,6 +167,7 @@ const PhotoViewer: React.FunctionComponent = () => {
             window.ipcRenderer.removeListener("bulk-process", bulkProcess)
             window.ipcRenderer.removeListener("draw", draw)
             window.ipcRenderer.removeListener("draw-undo", undoDraw)
+            window.ipcRenderer.removeListener("draw-redo", redoDraw)
             window.ipcRenderer.removeListener("draw-clear", clearDraw)
             window.ipcRenderer.removeListener("draw-increase-size", increaseBrushSize)
             window.ipcRenderer.removeListener("draw-decrease-size", decreaseBrushSize)
@@ -188,7 +190,7 @@ const PhotoViewer: React.FunctionComponent = () => {
             undo()
         }
         const triggerRedo = () => {
-            if (drawing) return
+            if (drawing) return redoDraw()
             redo()
         }
         window.ipcRenderer.on("trigger-undo", triggerUndo)
@@ -760,6 +762,10 @@ const PhotoViewer: React.FunctionComponent = () => {
 
     const undoDraw = () => {
         drawRef.current.undo()
+    }
+
+    const redoDraw = () => {
+        drawRef.current.redo()
     }
 
     const invertDraw = async () => {
