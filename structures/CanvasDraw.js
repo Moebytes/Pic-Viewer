@@ -160,6 +160,7 @@ export default class extends PureComponent {
     this.isDrawing = false;
     this.isPressing = false;
 
+    this.undoStack = [];
     this.redoStack = [];
 
     this.isPointerInside = false;
@@ -292,10 +293,11 @@ export default class extends PureComponent {
   };
 
   undo = () => {
-    if (this.lines.length === 0) return;
+    if (this.undoStack.length === 0) return;
 
-    const removedLine = this.lines.pop();
-    this.redoStack.push(removedLine);
+    this.redoStack.push([...this.lines]);
+
+    this.lines = this.undoStack.pop();
 
     this.redrawFromLines();
     this.triggerOnChange();
@@ -304,10 +306,22 @@ export default class extends PureComponent {
   redo = () => {
     if (this.redoStack.length === 0) return;
 
-    const restoredLine = this.redoStack.pop();
-    this.lines.push(restoredLine);
-    
+    this.undoStack.push(structuredClone(this.lines));
+
+    this.lines = this.redoStack.pop();
+
     this.redrawFromLines();
+    this.triggerOnChange();
+  };
+
+  clearAll = () => {
+    if (this.lines.length === 0) return;
+
+    this.undoStack.push(structuredClone(this.lines));
+    this.redoStack = [];
+
+    this.lines = [];
+    this.clear();
     this.triggerOnChange();
   };
 
@@ -711,6 +725,9 @@ export default class extends PureComponent {
   saveLine = ({ brushColor, brushRadius } = {}) => {
     if (this.points.length < 2) return;
 
+    this.undoStack.push(structuredClone(this.lines));
+    this.redoStack = [];
+    
     if (this.points[0].erase) {
       brushColor = "erase";
     }
@@ -721,8 +738,6 @@ export default class extends PureComponent {
       brushColor: brushColor || this.props.brushColor,
       brushRadius: brushRadius || this.props.brushRadius
     });
-
-    this.redoStack = [];
 
     // Reset points array
     this.points.length = 0;
@@ -747,11 +762,6 @@ export default class extends PureComponent {
       this.canvas.temp.width,
       this.canvas.temp.height
     );
-  };
-
-  clearAll = () => {
-    this.lines = [];
-    this.clear();
   };
 
   loop = ({ once = false } = {}) => {

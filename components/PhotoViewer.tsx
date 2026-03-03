@@ -757,7 +757,6 @@ const PhotoViewer: React.FunctionComponent = () => {
             setErasing(!erasing)
         } else {
             setDrawing(true)
-            resetZoom()
             window.ipcRenderer.invoke("trigger-accept-action", "draw")
         }
     })
