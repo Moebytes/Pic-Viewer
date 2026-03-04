@@ -1,7 +1,7 @@
 {
   "name": "pic-viewer",
   "version": "1.0.0",
-  "description": "A simple image viewer.",
+  "description": "A cute image viewer!",
   "main": "dist/main/index.js",
   "scripts": {
     "start": "npm run clean && rsbuild build && electron dist/main/index.js",

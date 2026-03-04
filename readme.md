@@ -2,22 +2,23 @@
 
 <img src="assets/images/readme.png">
 
-A simple image viewer app.
+A cute image viewer!
 
 ### Features:
-- View images (PNG, JPG, WEBP, TIFF) and animated GIFs
-- Support for local files, links, and images on the clipboard
+- View images (PNG, JPG, WEBP, AVIF) and animated GIFs
+- Support for remote links and images on the clipboard
 - Brightness/Contrast adjustment
 - Hue/Saturation/Lightness adjustment
 - Tint adjustment
 - Blur and Sharpen effects
 - Pixelate effect
 - Binarize effect
-- Crop, resize, rotate, and flip transformations
+- Crop images with a cropping tool
+- Annotate images with a pen and eraser
+- Resize, rotate, and flip transformations
 - GIF speed, reverse, and transparency adjustments
 - Undo and redo history states
-- Open next and previous files (from the file system)
-- Save images and GIFs with the applied effects
+- Save images and GIFs with applied effects
 - Process multiple images in bulk
 
 ### Keyboard Shortcuts:
