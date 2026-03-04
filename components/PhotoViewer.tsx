@@ -863,7 +863,7 @@ const PhotoViewer: React.FunctionComponent = () => {
                         {bulk ? <BulkContainer ref={bulkRef} files={bulkFiles}/> :
                         <div className="photo-container">
                             <div className="photo-drag-container" ref={containerRef} onMouseDown={dragImage}>
-                                <canvas className="effect-img" ref={effectRef} draggable={false}></canvas>
+                                <canvas className="effect-img" ref={effectRef} draggable={false} style={{opacity: cropEnabled ? "0" : "1"}}></canvas>
                                 {drawing ? <CanvasDraw ref={drawRef} className="draw-img" lazyRadius={0} brushRadius={brushSize} brushColor={brushColor} 
                                 catenaryColor="rgba(0, 0, 0, 0)" hideGrid={true} canvasWidth={width} canvasHeight={height} imgSrc={image} erase={erasing} 
                                 loadTimeOffset={0} eraseColor="#000000" zoom={zoomScale} style={{transform: `rotate(${-rotateDegrees}deg)`}}/> :
