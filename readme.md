@@ -1,4 +1,4 @@
-## Pic Viewer
+## Pic Player
 
 <img src="assets/images/readme.png">
 
@@ -43,17 +43,17 @@ A cute image viewer!
 
 ### Design
 
-Our design is available here: https://www.figma.com/design/kqGaBzYxe93zSPxDPz6wRa/Pic-Viewer
+Our design is available here: https://www.figma.com/design/kqGaBzYxe93zSPxDPz6wRa/Pic-Player
 
 ### Installation
 
-Download from [releases](https://github.com/Moebytes/Pic-Viewer/releases).
+Download from [releases](https://github.com/Moebytes/Pic-Player/releases).
 
 ### MacOS
 
 On MacOS unsigned applications won't open, run this to remove the quarantine flag.
 ```
-xattr -d com.apple.quarantine "/Applications/Pic Viewer.app"
+xattr -d com.apple.quarantine "/Applications/Pic Player.app"
 ```
 
 ### See Also

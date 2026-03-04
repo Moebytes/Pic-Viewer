@@ -1,5 +1,5 @@
 {
-  "name": "pic-viewer",
+  "name": "pic-player",
   "version": "1.0.0",
   "description": "A cute image viewer!",
   "main": "dist/main/index.js",
@@ -19,11 +19,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Moebytes/Pic-Viewer"
+    "url": "https://github.com/Moebytes/Pic-Player"
   },
   "build": {
-    "appId": "com.moebytes.pic-viewer",
-    "productName": "Pic Viewer",
+    "appId": "com.moebytes.pic-player",
+    "productName": "Pic Player",
     "icon": "./assets/icon.png",
     "directories": {
       "buildResources": "assets",
@@ -60,7 +60,7 @@
       "oneClick": false,
       "perMachine": true,
       "allowToChangeInstallationDirectory": true,
-      "uninstallDisplayName": "Pic Viewer",
+      "uninstallDisplayName": "Pic Player",
       "createDesktopShortcut": "always",
       "installerSidebar": "./assets/installer.bmp",
       "uninstallerSidebar": "./assets/installer.bmp"
@@ -78,7 +78,7 @@
     ],
     "publish": {
       "provider": "github",
-      "repo": "Pic-Viewer",
+      "repo": "Pic-Player",
       "owner": "Moebytes",
       "releaseType": "draft"
     },

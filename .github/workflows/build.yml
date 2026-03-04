@@ -10,8 +10,8 @@ on:
   workflow_dispatch:
 
 env:
-  APP_NAME: Pic-Viewer
-  ARTIFACT_PREFIX: pic-viewer
+  APP_NAME: Pic-Player
+  ARTIFACT_PREFIX: pic-player
 
 permissions:
   contents: write
