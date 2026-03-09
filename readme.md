@@ -1,4 +1,4 @@
-## Pic Player
+## Pic Display
 
 <img src="assets/images/readme.png">
 
@@ -43,22 +43,15 @@ A cute image viewer!
 
 ### Design
 
-Our design is available here: https://www.figma.com/design/kqGaBzYxe93zSPxDPz6wRa/Pic-Player
+Our design is available here: https://www.figma.com/design/kqGaBzYxe93zSPxDPz6wRa/Pic-Display
 
 ### Installation
 
-Download from [releases](https://github.com/Moebytes/Pic-Player/releases).
-
-### MacOS
-
-On MacOS unsigned applications won't open, run this to remove the quarantine flag.
-```
-xattr -d com.apple.quarantine "/Applications/Pic Player.app"
-```
+Download from [releases](https://github.com/Moebytes/Pic-Display/releases).
 
 ### See Also
 
 - [Tune Player](https://github.com/Moebytes/Tune-Player)
-- [Motion Player](https://github.com/Moebytes/Motion-Player)
+- [Frame Player](https://github.com/Moebytes/Frame-Player)
 
 

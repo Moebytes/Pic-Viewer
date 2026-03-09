@@ -1,5 +1,5 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Pic Player - A cute image viewer ❤                        *
+ * Pic Display - A cute image viewer ❤                        *
  * Copyright © 2026 Moebytes <moebytes.com>                  *
  * Licensed under CC BY-NC 4.0. See license.txt for details. *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -103,6 +103,7 @@ const PhotoViewer: React.FunctionComponent = () => {
         }
         const triggerPaste = async () => {
             const base64 = await window.clipboard.readImage()
+            if (!base64) return
             setImage(base64)
             window.ipcRenderer.invoke("update-original-images", base64)
             window.ipcRenderer.invoke("set-original-name", null)

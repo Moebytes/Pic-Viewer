@@ -1,12 +1,12 @@
 {
-  "name": "pic-player",
+  "name": "pic-display",
   "version": "1.0.0",
+  "author": "Moebytes",
   "description": "A cute image viewer!",
   "main": "dist/main/index.js",
   "scripts": {
     "start": "npm run clean && rsbuild build && electron dist/main/index.js",
-    "build": "npm run clean ./build && rsbuild build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder -p never",
-    "rebuild": "npm rebuild --runtime=electron --target=40.6.0 --disturl=https://atom.io/download/atom-shell --abi=143",
+    "build": "npm run clean ./build && rsbuild build && electron-builder -p never",
     "clean": "del-cli ./dist"
   },
   "keywords": [
@@ -17,19 +17,17 @@
     "anime",
     "cute"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Moebytes/Pic-Player"
-  },
+  "repository": "https://github.com/Moebytes/Pic-Display",
+  "privacyPolicy": "https://moebytes.com/privacy-policy",
+  "license": "CC BY-NC 4.0",
   "build": {
-    "appId": "com.moebytes.pic-player",
-    "productName": "Pic Player",
+    "appId": "com.moebytes.pic-display",
+    "productName": "Pic Display",
     "icon": "./assets/icon.png",
     "directories": {
       "buildResources": "assets",
       "output": "build"
     },
-    "buildDependenciesFromSource": true,
     "asar": true,
     "asarUnpack": [
       "**/node_modules/sharp/**/*",
@@ -37,10 +35,16 @@
     ],
     "mac": {
       "target": {
-        "target": "dmg",
+        "target": "mas",
         "arch": "arm64"
       },
+      "type": "distribution",
+      "provisioningProfile": "assets/mas/MacAppStore.provisionprofile",
       "category": "public.app-category.graphics-design"
+    },
+    "mas": {
+      "entitlements": "assets/mas/entitlements.mas.plist",
+      "entitlementsInherit": "assets/mas/entitlements.mas.inherit.plist"
     },
     "dmg": {
       "title": "${productName}",
@@ -60,13 +64,13 @@
       "oneClick": false,
       "perMachine": true,
       "allowToChangeInstallationDirectory": true,
-      "uninstallDisplayName": "Pic Player",
+      "uninstallDisplayName": "Pic Display",
       "createDesktopShortcut": "always",
       "installerSidebar": "./assets/installer.bmp",
       "uninstallerSidebar": "./assets/installer.bmp"
     },
     "appx": {
-      "identityName": "Moebytes.PicPlayer",
+      "identityName": "Moebytes.PicDisplay",
       "publisher": "CN=4C1B763B-CF01-4978-8749-986F562173D8, OID.2.25.311729368913984317654407730594956997722=1",
       "publisherDisplayName": "Moebytes",
       "capabilities": [
@@ -85,12 +89,6 @@
       "dist/**/*",
       "package.json"
     ],
-    "publish": {
-      "provider": "github",
-      "repo": "Pic-Player",
-      "owner": "Moebytes",
-      "releaseType": "draft"
-    },
     "fileAssociations": [
       {
         "ext": "jpg",
@@ -122,8 +120,6 @@
       }
     ]
   },
-  "author": "Moebytes",
-  "license": "CC BY-NC 4.0",
   "devDependencies": {
     "@electron-rsbuild/plugin-main": "^0.0.12",
     "@electron-rsbuild/plugin-preload": "^0.0.12",

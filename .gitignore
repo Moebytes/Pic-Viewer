@@ -3,3 +3,5 @@ build
 node_modules
 .env
 .DS_Store
+assets/mas/AppleDevelopment.provisionprofile
+assets/mas/MacAppStore.provisionprofile

@@ -1,5 +1,5 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Pic Player - A cute image viewer ❤                        *
+ * Pic Display - A cute image viewer ❤                        *
  * Copyright © 2026 Moebytes <moebytes.com>                  *
  * Licensed under CC BY-NC 4.0. See license.txt for details. *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */

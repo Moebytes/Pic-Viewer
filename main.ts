@@ -1,5 +1,5 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Pic Player - A cute image viewer ❤                        *
+ * Pic Display - A cute image viewer ❤                        *
  * Copyright © 2026 Moebytes <moebytes.com>                  *
  * Licensed under CC BY-NC 4.0. See license.txt for details. *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -15,6 +15,7 @@ import functions from "./structures/functions"
 import mainFunctions from "./structures/mainFunctions"
 import sharp from "sharp"
 import fs from "fs"
+import pack from "./package.json"
 
 process.setMaxListeners(0)
 let window: Electron.BrowserWindow | null
@@ -158,7 +159,7 @@ ipcMain.handle("resize-window", async (event, image: string) => {
 })
 
 ipcMain.handle("save-image", async (event, image: any, savePath: string) => {
-  saveImage(image, savePath)
+  await saveImage(image, savePath)
   shell.showItemInFolder(path.normalize(savePath))
 })
 
@@ -173,7 +174,7 @@ ipcMain.handle("bulk-save-directory", async (event: any) => {
   let images = historyStates[historyIndex] as any
   if (!images) return null
   const save = await dialog.showSaveDialog(window, {
-    defaultPath: originalImages[0],
+    defaultPath: path.dirname(originalImages[0]),
     filters: [
       {name: "All Files", extensions: ["*"]},
       {name: "PNG", extensions: ["png"]},
@@ -1576,7 +1577,10 @@ const applicationMenu = () =>  {
       submenu: [
         {role: "reload"},
         {role: "forceReload"},
-        {role: "toggleDevTools"}
+        {role: "toggleDevTools"},
+        {type: "separator"},
+        {label: "Online Support", click: () => shell.openExternal(pack.repository)},
+        {label: "Privacy Policy", click: () => shell.openExternal(pack.privacyPolicy)}
       ]
     }
   ]
