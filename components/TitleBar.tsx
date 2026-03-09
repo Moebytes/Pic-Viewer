@@ -4,7 +4,7 @@
  * Licensed under CC BY-NC 4.0. See license.txt for details. *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-import React, {useEffect, useState} from "react"
+import React, {useEffect, useEffectEvent, useState} from "react"
 import {useActiveSelector, useDrawingSelector, useDrawingActions, 
 useThemeSelector, useThemeActions,
 useActiveActions} from "../store"
@@ -60,9 +60,11 @@ const TitleBar: React.FunctionComponent = () => {
         }
         window.ipcRenderer.on("trigger-accept-action", triggerAcceptAction)
         window.ipcRenderer.on("clear-accept-action", clearAcceptAction)
+        window.ipcRenderer.on("toggle-pinned", switchPinned)
         return () => {
             window.ipcRenderer.removeListener("trigger-accept-action", triggerAcceptAction)
             window.ipcRenderer.removeListener("clear-accept-action", clearAcceptAction)
+            window.ipcRenderer.removeListener("toggle-pinned", switchPinned)
         }
     }, [])
 
@@ -156,9 +158,9 @@ const TitleBar: React.FunctionComponent = () => {
         setTransparent(!transparent)
     }
 
-    const switchPinned = () => {
+    const switchPinned = useEffectEvent(() => {
         setPinned(!pinned)
-    }
+    })
 
     const triggerAction = (response: "accept" | "cancel" | "square") => {
         window.ipcRenderer.invoke("accept-action-response", acceptAction, response)

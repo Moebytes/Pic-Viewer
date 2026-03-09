@@ -1449,7 +1449,8 @@ ipcMain.handle("context-menu", (event, {x, y}) => {
     {type: "separator"},
     {label: "Save Image", click: () => event.sender.send("save-img")},
     {label: "Copy Address", click: () => event.sender.send("copy-address", {x, y})},
-    {label: "Toggle Fullscreen", click: () => event.sender.send("fullscreen")}
+    {label: "Toggle Fullscreen", click: () => event.sender.send("fullscreen")},
+    {label: "Toggle Pinned", click: () => event.sender.send("toggle-pinned")}
   ]
 
   const menu = Menu.buildFromTemplate(template)
@@ -1545,6 +1546,11 @@ const applicationMenu = () =>  {
           click: (item, window) => {
             const win = window as BrowserWindow
             win?.webContents.send("fullscreen")
+        }},
+        {label: "Toggle Pinned",
+          click: (item, window) => {
+            const win = window as BrowserWindow
+            win?.webContents.send("toggle-pinned")
         }}
       ]
     },
