@@ -1,6 +1,6 @@
 {
   "name": "pic-display",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "Moebytes",
   "description": "A cute image viewer!",
   "main": "dist/main/index.js",
